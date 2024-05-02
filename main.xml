@@ -1,0 +1,16 @@
+<mod name="SHDHUD" author="Offyerrocker" color="Color(0.5,0.5,0.1)" global_key="SHDHUDCore" core_class="core.lua">
+	<Localization directory="l10n" default="english.json">
+		<loc file="english.json" language="english" />
+	</Localization>
+	
+	<AssetUpdates id="-0" version="0.0.1" provider="modworkshop" install_directory = "mods/"/>
+	
+	<AddFiles directory="assets">
+		<font path="fonts/borda_semibold" load="true" unload="false" />
+		<texture path="fonts/borda_semibold" />
+		<font path="fonts/borda_regular" load="true" unload="false" />
+		<texture path="fonts/borda_regular" />
+		<font path="fonts/borda_demibold" load="true" unload="false" />
+		<texture path="fonts/borda_demibold" />
+	</AddFiles>
+</mod>

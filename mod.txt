@@ -1,0 +1,27 @@
+{
+	"name" : "SHDHUD",
+	"description" : "A custom Heads-Up Display mod inspired by Tom Clancy's The Division (1 and 2).",
+	"author" : "Offyerrocker",
+	"contact" : "Discord: Offyerrocker#3878",
+	"version" : "1.0.0",
+	"blt_version" : 2,
+	"color" : "255 128 0",
+	"hooks" : [
+		{
+			"hook_id" : "lib/managers/menumanager",
+			"script_path" : "hooks/menumanager.lua"
+		},
+		{
+			"hook_id" : "lib/managers/hudmanager",
+			"script_path" : "hooks/hudmanager.lua"
+		},
+		{
+			"hook_id" : "lib/managers/hudmanagerpd2",
+			"script_path" : "hooks/hudmanagerpd2.lua"
+		},
+		{
+			"hook_id" : "lib/managers/hud/hudteammate",
+			"script_path" : "hooks/hudteammate.lua"
+		}
+	]
+}
