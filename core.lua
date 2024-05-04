@@ -77,8 +77,22 @@ _G.SHDHUDCore = SHDHUDCore or {}
 
 SHDHUDCore._MOD_PATH = mod_path
 SHDHUDCore._ASSETS_PATH = SHDHUDCore._ASSETS_PATH or (mod_path .. "assets/")
+SHDHUDCore._DEFAULT_LOCALIZATION_PATH = SHDHUDCore._DEFAULT_LOCALIZATION_PATH or (mod_path .. "localization/english.json")
+SHDHUDCore._COLORS_PATH = SHDHUDCore._COLORS_PATH or (SavePath .. "shdhud_colors.ini")
 SHDHUDCore._SETTINGS_PATH = SHDHUDCore._SETTINGS_PATH or (SavePath .. "shdhud_settings.json")
 SHDHUDCore._LAYOUT_PATH = SHDHUDCore._LAYOUT_PATH or (SavePath .. "shdhud_layout.ini")
+
+SHDHUDCore.DEFAULT_COLORS = { -- this table holds string representations of hex color numbers!
+	white = "ffffff",
+	red = "ff0000",
+	green = "00ff00"
+}
+SHDHUDCore._colors = {} -- this table holds Color objects!
+for id,color_code in pairs(SHDHUDCore.DEFAULT_COLORS) do 
+	SHDHUDCore._colors[id] = Color(color_code)
+end
+
+SHDHUDCore.SORT_COLORS = SHDHUDCore._LAYOUT_PATH or (SavePath .. "shdhud_layout.ini")
 
 SHDHUDCore.DEFAULT_SETTINGS = {
 	hi = "yes"
@@ -95,13 +109,7 @@ SHDHUDCore.SORT_LAYOUT = {
 }
 SHDHUDCore.layout = table.deep_map_copy(SHDHUDCore.DEFAULT_LAYOUT)
 
-
--- Load libraries
 SHDHUDCore._classes = {}
-do 
-	--SHDHUDCore._classes.SHDHUDPanel = blt.vm.dofile(mod_path .. "classes/SHDHUDPanel.lua")
-	SHDHUDCore._classes.LIP = blt.vm.dofile(mod_path .. "classes/LIP.lua")
-end
 
 function SHDHUDCore.file_exists(path)
 	if not path then
@@ -153,6 +161,8 @@ function SHDHUDCore:require(resource)
 	end
 end
 
+local LIP = SHDHUDCore:require("classes/LIP")
+
 -- load custom assets (not used)
 function SHDHUDCore:load_fonts()
 	local function check_asset_added(path,load_as_ext,actual_ext)
@@ -192,15 +202,50 @@ function SHDHUDCore:save_settings()
 end
 
 function SHDHUDCore:load_layout()
-	local data = SHDHUDCore._classes.LIP.load(SHDHUDCore._LAYOUT_PATH)
-	if data then
-		self._layout = data.Layout
+	if self.file_exists(self._LAYOUT_PATH) then
+		local data = LIP.load(self._LAYOUT_PATH)
+		if data and data.Layout then
+			self.layout = data.Layout
+		end
 	end
 end
 
 function SHDHUDCore:save_layout()
 	local data = {
-		Layout = self._layout
+		Layout = self.layout
 	}
-	SHDHUDCore._classes.LIP.save(SHDHUDCore._LAYOUT_PATH,SHDHUDCore.SORT_LAYOUT)
+	LIP.save(self._LAYOUT_PATH,data,self.SORT_LAYOUT)
+end
+
+function SHDHUDCore:load_colors()
+	if self.file_exists(self._COLORS_PATH) then
+		local data = LIP.load(self._COLORS_PATH)
+		if data and data.Colors then
+			for id,n in pairs(data.Colors) do 
+				self._colors[id] = Color(string.format("%06x",n))
+			end
+		end
+	end
+end
+
+function SHDHUDCore:save_colors()
+	-- get string hex codes from colors,
+	-- append "0x" and store/retrieve them as numbers
+	local color_tbl = {}
+	for id,color in pairs(self._colors) do
+		color_tbl[id] = string.format("0x%s",self.color_to_hex(color))
+	end
+	local data = {
+		Colors = color_tbl
+	}
+	LIP.save(self._COLORS_PATH,data,self.SORT_COLORS)
+end
+
+-- note: this discards alpha information
+function SHDHUDCore.color_to_hex(color)
+	if Color.to_hex then
+		return color:to_hex()
+	else
+		return string.format("%02x%02x%02x",255*color.red,255*color.green,255*color.blue)
+	end
 end
