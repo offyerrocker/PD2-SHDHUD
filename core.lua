@@ -92,7 +92,7 @@ for id,color_code in pairs(SHDHUDCore.DEFAULT_COLORS) do
 	SHDHUDCore._colors[id] = Color(color_code)
 end
 
-SHDHUDCore.SORT_COLORS = SHDHUDCore._LAYOUT_PATH or (SavePath .. "shdhud_layout.ini")
+SHDHUDCore.SORT_COLORS = SHDHUDCore.SORT_COLORS or (SavePath .. "shdhud_layout.ini")
 
 SHDHUDCore.DEFAULT_SETTINGS = {
 	hi = "yes"
