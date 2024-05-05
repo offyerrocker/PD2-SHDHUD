@@ -118,6 +118,29 @@ end
 
 function HUDManager:_set_weapon(data)
 	self._shdhud_player:add_weapon(data)
+	local unit = data.unit
+	local weapon_base = alive(unit) and unit:base()
+	if weapon_base then
+		for _,underbarrel in pairs(weapon_base:get_all_override_weapon_gadgets()) do
+--		local underbarrel = weapon_base:gadget_overrides_weapon_functions()
+--		if underbarrel then
+			local td = underbarrel._tweak_data
+			local use_data = td and td.use_data
+			local selection_index = use_data and use_data.selection_index
+			local ammo_info = underbarrel._ammo
+			if selection_index and ammo_info then
+				self._shdhud_player:_add_weapon(
+					selection_index,
+					ammo_info._ammo_max_per_clip,
+					ammo_info._ammo_remaining_in_clip,
+					ammo_info._ammo_total,
+					ammo_info._ammo_max
+				)
+				break -- take the first valid underbarrel; there will probably only be one per weapon anyhow
+			end
+		end
+	end
+	
 --[[
 	local unit = data.unit
 	local weapon_base = alive(unit) and unit:base()

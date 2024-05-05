@@ -957,7 +957,33 @@ function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
 	--Print("Set selected",id)
 	if self.data.equipped_weapon_index ~= id then
 		self.data.equipped_weapon_index = id
-		self:upd_ammo_amount(selection_index)
+		self:upd_ammo_amount(id)
+		
+		local color_full = SHDHUDCore:get_color("player_hud_loadout_full")
+		local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
+		local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
+		
+		local MAX_DIGITS = 2
+		local i = 0
+		for selection_index,ammo_data in ipairs(self.data.weapons) do 
+			if selection_index ~= id then
+				--table.insert(d,#d+1,ammo_data.magazine_current)
+				i = i + 1
+				local backpack_slot = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",i))
+				if alive(backpack_slot) then
+					self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current,MAX_DIGITS,{
+						color_full,
+						color_empty,
+						color_partial
+					})
+					
+					break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
+				else
+					break
+				end
+			end
+		end
+		
 	end
 end
 
@@ -1425,6 +1451,10 @@ function SHDHUDPlayer:set_cable_ties(amount)
 		color_empty,
 		color_partial
 	})
+	
+	local empty_alpha = 0.33
+	local full_alpha = 1
+	cable_ties:child("icon"):set_alpha(amount == 0 and empty_alpha or full_alpha)
 end
 
 
@@ -1445,6 +1475,7 @@ function SHDHUDPlayer:set_grenades(data)
 	
 	self:set_grenades_amount(data)
 end
+
 function SHDHUDPlayer:set_grenades_amount(data)
 	if not PlayerBase.USE_GRENADES then
 		return
@@ -1461,6 +1492,10 @@ function SHDHUDPlayer:set_grenades_amount(data)
 		color_empty,
 		color_partial
 	})
+	
+	local empty_alpha = 0.33
+	local full_alpha = 1
+	throwables:child("icon"):set_alpha(data.amount == 0 and empty_alpha or full_alpha)
 end
 
 function SHDHUDPlayer:set_grenade_cooldown(data)
