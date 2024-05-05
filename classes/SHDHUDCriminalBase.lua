@@ -122,6 +122,14 @@ function SHDHUDCriminalBase:set_deployable_amount()
 	
 end
 
+function SHDHUDCriminalBase:add_cable_ties(data)
+
+end
+
+function SHDHUDCriminalBase:set_cable_ties(i, amount)
+
+end
+
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection
 function SHDHUDCriminalBase:save()

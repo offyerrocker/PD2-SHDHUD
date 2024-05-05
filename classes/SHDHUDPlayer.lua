@@ -142,7 +142,8 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 		w = w,
 		h = h,
 		valign = "grow",
-		halign = "grow"
+		halign = "grow",
+		false
 	})
 	
 	local bg = panel:rect({
@@ -1395,6 +1396,35 @@ function SHDHUDPlayer:switch_deployable(prev_index,new_index)
 			deployable_new:animate(SHDAnimLibrary.animate_alpha_sq,0.33,1)
 		end
 	end
+end
+
+
+function SHDHUDCriminalBase:add_cable_ties(data)
+	local cable_ties = self._loadout_equipment_panel:child("cableties")
+	--local cable_ties = self._loadout_equipment_panel:child("throwables")
+	
+	cable_ties:child("amount_1")
+	
+	local texture, texture_rect = tweak_data.hud_icons:get_icon_data(data.icon)
+	cable_ties:child("icon"):set_image(texture,unpack(texture_rect))
+	cable_ties:show()
+	
+	self:set_cable_ties(data.amount)
+end
+
+function SHDHUDCriminalBase:set_cable_ties(amount)
+	local cable_ties = self._loadout_equipment_panel:child("cableties")
+	local MAX_DIGITS = 2
+	
+	local color_full = SHDHUDCore:get_color("player_hud_loadout_full")
+	local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
+	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
+	
+	self.set_number_label(cable_ties:child("amount_1"),amount,MAX_DIGITS,{
+		color_full,
+		color_empty,
+		color_partial
+	})
 end
 
 -- returns a fresh table with a copy of all of this panel's data,

@@ -351,6 +351,16 @@ function HUDManager:add_item_from_string(data)
 end
 --]]
 
+	-- Cable Ties
+
+function HUDManager:set_cable_tie(i, data)
+	self._shdhud_teammates[i]:add_cable_ties(data)
+end
+
+function HUDManager:set_cable_ties_amount(i, amount)
+	self._shdhud_teammates[i]:set_cable_ties(amount)
+end
+
 
 do return end
 
