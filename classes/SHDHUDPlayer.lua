@@ -1550,31 +1550,12 @@ end
 
 function SHDHUDPlayer:activate_ability_radial(time_left,time_total)
 	-- start radial ability active duration animation
-	
 	time_total = time_total or time_left
 	local throwables = self._loadout_equipment_panel:child("throwables")
 	local bg = throwables:child("bg")
 	bg:set_w(throwables:w() * time_left / time_total)
 	bg:show()
 	bg:animate(SHDAnimLibrary.animate_resize_linear,time_left,0,nil)
-	--[[
-	local function animate_func(o,end_time,to_w)
-		local from_w = o:w()
-		local d_w = to_w - from_w
-		local duration = end_time - managers.game_play_central:get_heist_timer()
-		repeat
-			local time_left = end_time - managers.game_play_central:get_heist_timer()
-			local lerp = math.clamp(1 - (time_left / duration),0,1)
-			o:set_w(from_w + (d_w * lerp))
-		until time_left <= 0
-		o:set_w(to_w)
-		
-	end
-	local current_time = managers.game_play_central:get_heist_timer()
-	local end_time = current_time + time_left
-	bg:animate(animate_func,end_time,0)
-	--]]
-	
 	managers.network:session():send_to_peers("sync_ability_hud", managers.game_play_central:get_heist_timer() + time_left, time_total)
 end
 
