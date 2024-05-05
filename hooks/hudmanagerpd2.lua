@@ -116,11 +116,8 @@ function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, cur
 	--]]
 end
 
-end
-
-
-
 function HUDManager:_set_weapon(data)
+	self._shdhud_player:add_weapon(data)
 --[[
 	local unit = data.unit
 	local weapon_base = alive(unit) and unit:base()
