@@ -46,8 +46,7 @@ function SHDHUDCriminalBase:init(master_panel,index,...)
 				magazine_current = 0,
 				magazine_max = 0,
 				reserve_current = 0,
-				reserve_max = 0,
-				is_underbarrel = 0
+				reserve_max = 0
 			}
 		}
 	}
@@ -106,23 +105,23 @@ function SHDHUDCriminalBase:_add_weapon(index,magazine_max,magazine_current,rese
 	wpn_info.reserve_max = reserve_max or wpn_info.reserve_max
 end
 
-function SHDHUDCriminalBase:set_ammo_amount()
+function SHDHUDCriminalBase:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
 	
 end
 
-function SHDHUDCriminalBase:set_weapon_selected()
+function SHDHUDCriminalBase:set_weapon_selected(id,hud_icon)
 	
 end
 
-function SHDHUDCriminalBase:add_deployable()
+function SHDHUDCriminalBase:add_deployable(data)
 	
 end
 
-function SHDHUDCriminalBase:switch_deployable()
+function SHDHUDCriminalBase:switch_deployable(prev_index,new_index)
 	
 end
 
-function SHDHUDCriminalBase:set_deployable_amount()
+function SHDHUDCriminalBase:set_deployable_amount(data)
 	
 end
 

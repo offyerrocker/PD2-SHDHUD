@@ -269,20 +269,6 @@ function SHDHUDPlayer:create_vitals()
 	})
 	--]]
 	
-	--self:create_armor_bar(armor_panel,100)
-	
-	--[[
-	
-	local armor_debug = armor_panel:rect({
-		name = "armor_debug",
-		color = Color.green,
-		visible = DEBUG_VISIBLE,
-		alpha = 0.5,
-		valign = "grow",
-		halign = "grow"
-	})
-	--]]
-	
 	local health_panel = vitals:panel({
 		name = "health_panel",
 		w = vitals:w(),
@@ -296,7 +282,7 @@ function SHDHUDPlayer:create_vitals()
 	
 	--self:create_health_bar(health_panel,100)
 	
-	--[[
+	--[ [
 	local health_debug = health_panel:rect({
 		name = "health_debug",
 		color = Color.blue,
@@ -344,6 +330,20 @@ function SHDHUDPlayer:create_vitals()
 	})
 	armor_panel:set_bottom(health_panel:y())
 	self._armor_panel = armor_panel
+	--self:create_armor_bar(armor_panel,100)
+	
+	--[ [
+	
+	local armor_debug = armor_panel:rect({
+		name = "armor_debug",
+		color = Color.green,
+		visible = DEBUG_VISIBLE,
+		alpha = 0.5,
+		valign = "grow",
+		halign = "grow"
+	})
+	--]]
+	
 	
 	return vitals
 end
@@ -958,32 +958,48 @@ function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
 	if self.data.equipped_weapon_index ~= id then
 		self.data.equipped_weapon_index = id
 		self:upd_ammo_amount(id)
-		
-		local color_full = SHDHUDCore:get_color("player_hud_loadout_full")
-		local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
-		local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
-		
-		local MAX_DIGITS = 2
-		local i = 0
-		for selection_index,ammo_data in ipairs(self.data.weapons) do 
-			if selection_index ~= id then
-				--table.insert(d,#d+1,ammo_data.magazine_current)
-				i = i + 1
-				local backpack_slot = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",i))
-				if alive(backpack_slot) then
-					self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current,MAX_DIGITS,{
-						color_full,
-						color_empty,
-						color_partial
-					})
-					
-					break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
-				else
-					break
-				end
+		self:upd_backpack_ammo(id)
+	end
+end
+
+function SHDHUDPlayer:add_weapon(data,...)
+	SHDHUDPlayer.super.add_weapon(self,data,...)
+	local player = managers.player:local_player()
+	if alive(player) then
+		local inventory = player:inventory()
+		local selection_index = inventory and inventory._equipped_selection
+		if selection_index then
+			self:upd_backpack_ammo(selection_index)
+		end
+	end
+end
+
+-- update magazine count of stowed weapon
+function SHDHUDPlayer:upd_backpack_ammo(equipped_index)		
+	local color_full = SHDHUDCore:get_color("player_hud_loadout_full")
+	local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
+	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
+	
+	local MAX_DIGITS = 2
+	local i = 0
+	for selection_index,ammo_data in ipairs(self.data.weapons) do 
+		if selection_index ~= equipped_index then
+			--table.insert(d,#d+1,ammo_data.magazine_current)
+			i = i + 1
+			local backpack_slot = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",i))
+			if alive(backpack_slot) then
+				--[[
+				self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current,MAX_DIGITS,{
+					color_full,
+					color_empty,
+					color_partial
+				})
+				--]]
+				break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
+			else
+				break
 			end
 		end
-		
 	end
 end
 
