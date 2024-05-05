@@ -23,6 +23,10 @@ Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_se
 	
 end)
 
+function HUDManager:shdhud_on_mission_loud()
+	self._shdhud_player:unfold_armor_bar()
+end
+
 function HUDManager:hide_player_gear(panel_id)
 	
 	self._shdhud_teammates[panel_id]:hide()
@@ -85,29 +89,33 @@ function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, cur
 	--self._shdhud_player:set_magazine_amount(selection_index,current_clip,max_clip)
 	--self._shdhud_player:set_reserve_amount(selection_index,current_left,max_left)
 	managers.player:update_synced_ammo_info_to_peers(selection_index, max_clip, current_clip, current_left, max_left)
-end
-
-
-
-function HUDManager:_set_weapon_selected(id)
---	self._hud.selected_weapon = id
---	local icon = self._hud.weapons[self._hud.selected_weapon].unit:base():weapon_tweak_data().hud_icon
-
---	self:_set_teammate_weapon_selected(HUDManager.PLAYER_PANEL, id, icon)
-	self._shdhud_player:set_weapon_selected(id)
-end
-
-function HUDManager:set_alt_ammo(state)
-	for _, o in pairs(self._shdhud_teammates) do
-		o:set_alt_ammo(state)
+--[[
+	if selection_index > 4 then
+		return
 	end
+	managers.player:update_synced_ammo_info_to_peers(selection_index, max_clip, current_clip, current_left, max_reserves)
+--	Print(selection_index,current_clip,debug.traceback())
+	local player = managers.player:local_player()
+	if alive(player) then
+		if selection_index <= 2 then
+			local inv_ext = player:inventory()
+			local unit = inv_ext:unit_by_selection(selection_index)
+			local base = unit:base()
+			local underbarrel = base:gadget_overrides_weapon_functions()
+			if underbarrel then
+				--don't update the ammo count if the selection index is incorrect (ie if the underbarrel is active)
+				
+--				selection_index = selection_index + 2
+				return
+			end
+		else
+		
+		end
+	end
+	self:set_own_ammo_amount(selection_index, max_clip, current_clip, current_left, max_reserves)
+	--]]
 end
 
-do return end
-
-
-function HUDManager:set_weapon_selected_by_inventory_index(inventory_index)
-	--Print("Inventory index",inventory_index)
 end
 
 
@@ -226,6 +234,136 @@ function HUDManager:_set_weapon(data)
 	--]]
 end
 
+function HUDManager:_set_weapon_selected(id)
+--	self._hud.selected_weapon = id
+--	local icon = self._hud.weapons[self._hud.selected_weapon].unit:base():weapon_tweak_data().hud_icon
+
+--	self:_set_teammate_weapon_selected(HUDManager.PLAYER_PANEL, id, icon)
+	self._shdhud_player:set_weapon_selected(id)
+end
+
+function HUDManager:set_alt_ammo(state)
+	for _, o in pairs(self._shdhud_teammates) do
+		o:set_alt_ammo(state)
+	end
+end
+
+
+	-- Deployable Equipment
+
+function HUDManager:shdhud_switch_deployable(prev_index,new_index)
+	self._shdhud_teammates[HUDManager.PLAYER_PANEL]:switch_deployable(prev_index,new_index)
+end
+
+function HUDManager:shdhud_upd_deployable_equipments()
+	for index,eq in pairs(managers.player._equipment.selections) do 
+		local amount_digested = eq.amount
+		local id = eq.equipment
+		local amounts = {}
+		for i=1,#amount_digested,1 do 
+			amounts[i] = Application:digest_value(amount_digested[i], false)
+		end
+		
+		self:shdhud_set_deployable_equipment(HUDManager.PLAYER_PANEL,{
+			id = id,
+			slot = index,
+			amount = amounts
+		})
+	end
+end
+
+function HUDManager:shdhud_chk_add_deployables()
+	local pmeq = managers.player._equipment
+	local equipped_index = pmeq.selected_index
+	for index,eq in pairs(pmeq.selections) do 
+		local amount_digested = eq.amount
+		local id = eq.equipment
+		local td = tweak_data.equipments[id]
+		local icon = td.icon
+		
+		local amounts = {}
+		for i=1,#amount_digested,1 do 
+			amounts[i] = Application:digest_value(amount_digested[i], false)
+		end
+		if equipped_index == index then
+			self:shdhud_switch_deployable(nil,equipped_index)
+		else
+			self:shdhud_switch_deployable(index,nil)
+		end
+		self:shdhud_add_deployable_equipment(HUDManager.PLAYER_PANEL,{
+			icon = icon,
+			id = id,
+			slot = index,
+			amount = amounts
+		})
+	end
+end
+
+function HUDManager:shdhud_add_deployable_equipment(i,data)
+	self._shdhud_teammates[i]:add_deployable(data)
+end
+
+function HUDManager:shdhud_set_deployable_equipment(i,data)
+	self._shdhud_teammates[i]:set_deployable_amount(data)
+end
+
+function HUDManager:set_deployable_equipment(i, data)
+	if i == HUDManager.PLAYER_PANEL then
+		self:shdhud_upd_deployable_equipments()
+	end
+end
+
+function HUDManager:set_item_amount(index, amount)
+	self:shdhud_set_deployable_equipment(HUDManager.PLAYER_PANEL,{
+		slot = index,
+		amount = {
+			amount,
+			nil
+		}
+	})
+end
+
+function HUDManager:set_item_amount_from_string(index, amount_str, amount)
+	self:shdhud_set_deployable_equipment(HUDManager.PLAYER_PANEL,{
+		slot = index,
+		amount = amount
+	})
+end
+
+function HUDManager:set_deployable_equipment_from_string(i, data)
+	if i == HUDManager.PLAYER_PANEL then
+		self:shdhud_upd_deployable_equipments()
+	end
+end
+
+--[[
+function HUDManager:set_teammate_deployable_equipment_amount(i, index, data)
+	self._teammate_panels[i]:set_deployable_equipment_amount(index, data)
+end
+
+function HUDManager:set_teammate_deployable_equipment_amount_from_string(i, index, data)
+	self._teammate_panels[i]:set_deployable_equipment_amount_from_string(index, data)
+end
+
+function HUDManager:add_item(data)
+	self:set_deployable_equipment(HUDManager.PLAYER_PANEL, data)
+end
+
+function HUDManager:add_item_from_string(data)
+	self:set_deployable_equipment_from_string(HUDManager.PLAYER_PANEL, data)
+end
+--]]
+
+
+do return end
+
+
+function HUDManager:set_weapon_selected_by_inventory_index(inventory_index)
+	--Print("Inventory index",inventory_index)
+end
+
+
+
 --custom
 function HUDManager:_set_player_weapon_perk(slot,is_underbarrel,perk_type,state)
 	--self._teammate_panels[HUDManager.PLAYER_PANEL]:set_weapon_perk_icon(slot,is_underbarrel,perk_type,state)
@@ -275,41 +413,8 @@ function HUDManager:check_underbarrel_ammo()
 	--]]
 end
 
-
-function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, current_left, max_reserves)
---[[
-	if selection_index > 4 then
-		return
-	end
-	managers.player:update_synced_ammo_info_to_peers(selection_index, max_clip, current_clip, current_left, max_reserves)
---	Print(selection_index,current_clip,debug.traceback())
-	local player = managers.player:local_player()
-	if alive(player) then
-		if selection_index <= 2 then
-			local inv_ext = player:inventory()
-			local unit = inv_ext:unit_by_selection(selection_index)
-			local base = unit:base()
-			local underbarrel = base:gadget_overrides_weapon_functions()
-			if underbarrel then
-				--don't update the ammo count if the selection index is incorrect (ie if the underbarrel is active)
-				
---				selection_index = selection_index + 2
-				return
-			end
-		else
-		
-		end
-	end
-	self:set_own_ammo_amount(selection_index, max_clip, current_clip, current_left, max_reserves)
-	--]]
-end
-
 function HUDManager:set_own_ammo_amount(selection_index, max_clip, current_clip, current_left, max_reserves) --custom
 	--self._teammate_panels[HUDManager.PLAYER_PANEL]:set_ammo_amount(selection_index, max_clip, current_clip, current_left, max_reserves)
-end
-
-function HUDManager:switch_player_deployable(selection_index) --custom
-	--self._teammate_panels[HUDManager.PLAYER_PANEL]:animate_switch_deployables(selection_index)
 end
 
 function HUDManager:_set_teammate_weapon_selected(i, id, icon)

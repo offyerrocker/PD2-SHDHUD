@@ -23,12 +23,17 @@ function SHDHUDCriminalBase:init(master_panel,index,...)
 		health_low_threshold = 0 -- effectively disabled low health flashing warnings
 	}
 	
+	local groupaimgr = managers.groupai and managers.groupai:state()
+	local is_police_called = groupaimgr and groupaimgr:is_police_called()
+	
 	self.data = {
 		low_armor_anim = nil, -- will hold the coroutine for alpha flashing health hud anim
 		low_health_anim = nil, -- will hold the coroutine for alpha flashing health hud anim
+		is_health_bar_unfolded = false,
 		revives_current = 0,
 		health_current = 0,
 		health_total = 0,
+		is_armor_bar_unfolded = is_police_called or false,
 		armor_current = 0,
 		armor_total = 0,
 		armor_segment_remainder_w = 4,
@@ -81,9 +86,41 @@ function SHDHUDCriminalBase:set_cable_ties(current)
 	
 end
 
+function SHDHUDCriminalBase:add_weapon(data)
+	local index = data.inventory_index
+	local magazine_max,magazine_current,reserve_current,reserve_max = data.unit:ammo_info()
+	local wpn_info
+	if self.data.weapons[index] then
+		wpn_info = self.data.weapons[index]
+	else
+		wpn_info = {}
+		self.data.weapons[index] = wpn_info
+	end
+	wpn_info.magazine_max = magazine_max or wpn_info.magazine_max
+	wpn_info.magazine_current = magazine_current or wpn_info.magazine_current
+	wpn_info.reserve_current = reserve_current or wpn_info.reserve_current
+	wpn_info.reserve_max = reserve_max or wpn_info.reserve_max
+end
 
+function SHDHUDCriminalBase:set_ammo_amount()
+	
+end
 
+function SHDHUDCriminalBase:set_weapon_selected()
+	
+end
 
+function SHDHUDCriminalBase:add_deployable()
+	
+end
+
+function SHDHUDCriminalBase:switch_deployable()
+	
+end
+
+function SHDHUDCriminalBase:set_deployable_amount()
+	
+end
 
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection

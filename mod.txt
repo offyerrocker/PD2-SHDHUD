@@ -12,6 +12,10 @@
 			"script_path" : "hooks/menumanager.lua"
 		},
 		{
+			"hook_id" : "lib/managers/playermanager",
+			"script_path" : "hooks/playermanager.lua"
+		},
+		{
 			"hook_id" : "lib/managers/hudmanager",
 			"script_path" : "hooks/hudmanager.lua"
 		},
@@ -22,6 +26,10 @@
 		{
 			"hook_id" : "lib/units/beings/player/playerinventory",
 			"script_path" : "hooks/playerinventory.lua"
+		},
+		{
+			"hook_id" : "lib/managers/group_ai_states/groupaistatebase",
+			"script_path" : "hooks/groupaistatebase.lua"
 		},
 		{
 			"hook_id" : "lib/units/weapons/newraycastweaponbase",

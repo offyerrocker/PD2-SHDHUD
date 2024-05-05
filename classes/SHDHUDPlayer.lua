@@ -56,7 +56,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 	end
 	
 	local icon_color = SHDHUDCore:get_color("player_hud_deployable_icon")
-	local text_color = SHDHUDCore:get_color("player_hud_deployable_text")
+	local text_color = SHDHUDCore:get_color("player_hud_deployable_full")
 	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
 	
 	local w = parent:w()/2
@@ -87,6 +87,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		w = 16,
 		h = 16,
 		layer = 2,
+		alpha = 0.33,
 		visible = true
 	})
 	local c_x,c_y = panel:center()
@@ -103,6 +104,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		monospace = true,
 		align = "left",
 		vertical = "center", --"top"
+		visible = false,
 		layer = 2
 	})
 	local amount_2 = panel:text({
@@ -372,6 +374,15 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 		valign = "grow",
 		halign = "grow"
 	})
+	local frame_bg = panel:panel({
+		name = "frame_bg",
+		x = h_margin,
+		y = v_margin,
+		w = max_w,
+		h = max_h,
+		valign = "grow",
+		halign = "grow"
+	})
 	local frame_fg = frame:rect({
 		name = "frame_fg",
 		color = highlight_color,
@@ -422,7 +433,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 				rotation = 0.001,
 				alpha = 1
 			})
-			local segment_bg = frame:rect({
+			local segment_bg = frame_bg:rect({
 				name = string.format("segment_%i_bg",i),
 				color = bg_color,
 				x = x,
@@ -467,7 +478,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 			layer = 2,
 			alpha = 1
 		})
-		local segment_bg = frame:rect({
+		local segment_bg = frame_bg:rect({
 			name = "segment_1_bg",
 			color = bg_color,
 			x = 0,
@@ -482,6 +493,13 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 		self.data.armor_segment_remainder_w = max_w
 		self.data.armor_segments_total = 1
 	end
+	
+	if self.data.is_armor_bar_unfolded then
+		self:unfold_armor_bar()
+	--else
+		--self:fold_armor_bar()
+	end
+	
 	return frame
 end
 
@@ -505,6 +523,16 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 	
 	frame = panel:panel({
 		name = "frame",
+		x = h_margin,
+		y = v_margin,
+		w = max_w,
+		h = max_h,
+		valign = "grow",
+		halign = "grow"
+	})
+	
+	local frame_bg = panel:panel({
+		name = "frame_bg",
 		x = h_margin,
 		y = v_margin,
 		w = max_w,
@@ -559,7 +587,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 				layer = 2,
 				alpha = 1
 			})
-			local segment_bg = frame:rect({
+			local segment_bg = frame_bg:rect({
 				name = string.format("segment_%i_bg",i),
 				color = bg_color,
 				x = x,
@@ -603,7 +631,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 			layer = 2,
 			alpha = 1
 		})
-		local segment_bg = frame:rect({
+		local segment_bg = frame_bg:rect({
 			name = "segment_1_bg",
 			color = bg_color,
 			x = 0,
@@ -618,6 +646,13 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 		self.data.health_segment_remainder_w = max_w
 		self.data.health_segments_total = 1
 	end
+	
+	if self.data.is_health_bar_unfolded then
+		self:unfold_health_bar()
+	--else
+		--self:fold_health_bar()
+	end
+	
 	return frame
 end
 
@@ -1080,6 +1115,15 @@ function SHDHUDPlayer:_set_health(current,total,revives)
 				end
 			end
 		end
+		if current >= total then
+			if self.data.is_health_bar_unfolded then
+				self:fold_health_bar()
+			end
+		else
+			if not self.data.is_health_bar_unfolded then
+				self:unfold_health_bar()
+			end
+		end
 	end
 end
 
@@ -1197,6 +1241,8 @@ function SHDHUDPlayer:fold_armor_bar()
 	local bottom_y = self._health_panel:y()
 	
 	frame:animate(self.animate_grow_armor_bar,duration,to_h,bottom_y)
+	
+	self.data.is_armor_bar_unfolded = false
 end
 
 function SHDHUDPlayer:unfold_armor_bar()
@@ -1206,6 +1252,8 @@ function SHDHUDPlayer:unfold_armor_bar()
 	local bottom_y = self._health_panel:y()
 	
 	frame:animate(self.animate_grow_armor_bar,duration,to_h,bottom_y)
+	
+	self.data.is_armor_bar_unfolded = true
 end
 
 function SHDHUDPlayer.animate_grow_health_bar(o,duration,to_h,b_y,o2)
@@ -1235,6 +1283,8 @@ function SHDHUDPlayer:fold_health_bar()
 	local bottom_y = self._vitals_panel:h()
 	
 	frame:animate(self.animate_grow_health_bar,duration,to_h,bottom_y,self._armor_panel)
+	
+	self.data.is_health_bar_unfolded = false
 end
 
 function SHDHUDPlayer:unfold_health_bar()
@@ -1244,6 +1294,107 @@ function SHDHUDPlayer:unfold_health_bar()
 	local bottom_y = self._vitals_panel:h()
 	
 	frame:animate(self.animate_grow_health_bar,duration,to_h,bottom_y,self._armor_panel)
+
+	self.data.is_health_bar_unfolded = true
+end
+
+
+function SHDHUDPlayer:add_deployable(data)
+	self:set_deployable_icon(data)
+	self:set_deployable_amount(data)
+end
+
+function SHDHUDPlayer:set_deployable_icon(data)
+	self:_set_deployable_icon(data.slot or 1,data.icon)
+end
+
+function SHDHUDPlayer:_set_deployable_icon(slot,id)
+	local panel = self._deployables_panel:child(string.format("deployable_%s",slot))
+	if alive(panel) then
+		local texture, texture_rect = tweak_data.hud_icons:get_icon_data(id)
+		local icon = panel:child("icon")
+		icon:set_image(texture,unpack(texture_rect))
+		panel:show()
+	end
+end
+
+function SHDHUDPlayer:set_deployable_amount(data)
+	local amount_type = type(data.amount)
+	if amount_type == "table" then
+		self:_set_deployable_amount(data.slot or 1,data.amount[1],data.amount[2])
+	elseif amount_type == "number" then
+		self:_set_deployable_amount(data.slot or 1,data.amount)
+	elseif amount_type == "nil" then
+		error("Nil amount to SHDHUDPlayer:set_deployable_amount()")
+	else
+		error("Unknown amount type to SHDHUDPlayer:set_deployable_amount(): " .. tostring(data.amount))
+	end
+end
+
+function SHDHUDPlayer:_set_deployable_amount(slot,amount1,amount2)
+	local panel = self._deployables_panel:child(string.format("deployable_%s",slot))
+	
+	local color_full = SHDHUDCore:get_color("player_hud_deployable_full")
+	local color_empty = SHDHUDCore:get_color("player_hud_deployable_empty_1")
+	local color_partial = SHDHUDCore:get_color("player_hud_deployable_empty_2")
+	
+	if alive(panel) then
+		local MAX_DIGITS = 2
+		local label_1 = panel:child("amount_1")
+		local label_2 = panel:child("amount_2")
+		if amount1 then
+			if (amount2 == 0 or not amount2) and amount1 == 0 then
+				panel:child("icon"):set_alpha(0.33)
+			else
+				panel:child("icon"):set_alpha(1)
+			end
+			
+			self.set_number_label(label_1,amount1,MAX_DIGITS,{
+				color_full,
+				color_empty,
+				color_partial
+			})
+			
+			label_1:show()
+		end
+		if amount2 then
+			self.set_number_label(label_2,amount2,MAX_DIGITS,{
+				color_full,
+				color_empty,
+				color_partial
+			})
+			
+			if amount2 ~= 0 then
+				label_1:set_vertical("top")
+				label_1:set_font_size(12)
+				label_1:set_y(1)
+				
+				label_2:show()
+			else
+				label_1:set_vertical("center")
+				label_1:set_font_size(18)
+				label_1:set_y(0)
+				
+				label_2:hide()
+			end
+		end
+		panel:show()
+	end
+end
+
+function SHDHUDPlayer:switch_deployable(prev_index,new_index)
+	if prev_index and prev_index ~= new_index then
+		local deployable_prev = self._deployables_panel:child(string.format("deployable_%s",prev_index))
+		if alive(deployable_prev) then
+			deployable_prev:animate(SHDAnimLibrary.animate_alpha_sq,0.33,0.5)
+		end
+	end
+	if new_index then
+		local deployable_new = self._deployables_panel:child(string.format("deployable_%s",new_index))
+		if alive(deployable_new) then
+			deployable_new:animate(SHDAnimLibrary.animate_alpha_sq,0.33,1)
+		end
+	end
 end
 
 -- returns a fresh table with a copy of all of this panel's data,
@@ -1260,17 +1411,31 @@ end
 function SHDHUDPlayer:load(in_data)
 	self.data = in_data
 	
-	if self.in_data.health_total == 0 then
+	if in_data.health_total == 0 then
 		self._health_panel:child("frame"):hide()
 	end
 	self:_set_health(DISPLAY_MUL * in_data.health_current,DISPLAY_MUL * in_data.health_total,in_data.revives_current)
 	self:set_revives_amount(in_data.revives_current)
 	
 	local DISPLAY_MUL = tweak_data.gui.stats_present_multiplier
-	if self.in_data.armor_total == 0 then
+	if in_data.armor_total == 0 then
 		self._armor_panel:child("frame"):hide()
 	end
+	
 	self:_set_armor(DISPLAY_MUL * in_data.armor_current,DISPLAY_MUL * in_data.armor_total)
+	
+	if in_data.is_health_bar_unfolded then
+		self:unfold_health_bar()
+	else
+		self:fold_health_bar()
+	end
+	
+	if in_data.is_armor_bar_unfolded then
+		self:unfold_armor_bar()
+	else
+		self:fold_armor_bar()
+	end
+	
 end
 
 

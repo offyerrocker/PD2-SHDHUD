@@ -119,4 +119,19 @@ function anim.animate_move_sq(o,duration,to_x,to_y)
 	end
 end
 
+function anim.animate_alpha_sq(o,duration,to_a)
+	local from_a = o:alpha()
+	local delta_a = to_a - from_a
+	local t,dt = 0,0
+	
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		local interp = math.pow(t/duration,2)
+		
+		o:set_alpha(from_a + (delta_a * interp))
+	end
+	o:set_alpha(to_a)
+end
+
 return anim
