@@ -1399,7 +1399,7 @@ function SHDHUDPlayer:switch_deployable(prev_index,new_index)
 end
 
 
-function SHDHUDCriminalBase:add_cable_ties(data)
+function SHDHUDPlayer:add_cable_ties(data)
 	local cable_ties = self._loadout_equipment_panel:child("cableties")
 	--local cable_ties = self._loadout_equipment_panel:child("throwables")
 	
@@ -1412,7 +1412,7 @@ function SHDHUDCriminalBase:add_cable_ties(data)
 	self:set_cable_ties(data.amount)
 end
 
-function SHDHUDCriminalBase:set_cable_ties(amount)
+function SHDHUDPlayer:set_cable_ties(amount)
 	local cable_ties = self._loadout_equipment_panel:child("cableties")
 	local MAX_DIGITS = 2
 	
@@ -1428,7 +1428,7 @@ function SHDHUDCriminalBase:set_cable_ties(amount)
 end
 
 
-function SHDHUDCriminalBase:set_grenades(data)
+function SHDHUDPlayer:set_grenades(data)
 	if not PlayerBase.USE_GRENADES then
 		return
 	end
@@ -1445,7 +1445,7 @@ function SHDHUDCriminalBase:set_grenades(data)
 	
 	self:set_grenades_amount(data)
 end
-function SHDHUDCriminalBase:set_grenades_amount(data)
+function SHDHUDPlayer:set_grenades_amount(data)
 	if not PlayerBase.USE_GRENADES then
 		return
 	end
@@ -1463,7 +1463,7 @@ function SHDHUDCriminalBase:set_grenades_amount(data)
 	})
 end
 
-function SHDHUDCriminalBase:set_grenade_cooldown(data)
+function SHDHUDPlayer:set_grenade_cooldown(data)
 	local throwables = self._loadout_equipment_panel:child("throwables")
 	local progress_bg = throwables:child("progress_bg")
 	local progress_bobber = throwables:child("progress_bobber")
@@ -1543,23 +1543,50 @@ function SHDHUDCriminalBase:set_grenade_cooldown(data)
 	
 	managers.network:session():send_to_peers("sync_grenades_cooldown", end_time, duration)
 end
-function SHDHUDCriminalBase:set_ability_icon(icon)
+
+function SHDHUDPlayer:set_ability_icon(icon)
 	-- the icon that appears in the center of the health radial, while an ability is active
 end
-function SHDHUDCriminalBase:activate_ability_radial(data)
-	-- start radial ability duration animation
 
-
+function SHDHUDPlayer:activate_ability_radial(time_left,time_total)
+	-- start radial ability active duration animation
+	
+	time_total = time_total or time_left
+	local throwables = self._loadout_equipment_panel:child("throwables")
+	local bg = throwables:child("bg")
+	bg:set_w(throwables:w() * time_left / time_total)
+	bg:show()
+	bg:animate(SHDAnimLibrary.animate_resize_linear,time_left,0,nil)
+	--[[
+	local function animate_func(o,end_time,to_w)
+		local from_w = o:w()
+		local d_w = to_w - from_w
+		local duration = end_time - managers.game_play_central:get_heist_timer()
+		repeat
+			local time_left = end_time - managers.game_play_central:get_heist_timer()
+			local lerp = math.clamp(1 - (time_left / duration),0,1)
+			o:set_w(from_w + (d_w * lerp))
+		until time_left <= 0
+		o:set_w(to_w)
+		
+	end
 	local current_time = managers.game_play_central:get_heist_timer()
 	local end_time = current_time + time_left
-
-	managers.network:session():send_to_peers("sync_ability_hud", end_time, time_total)
+	bg:animate(animate_func,end_time,0)
+	--]]
+	
+	managers.network:session():send_to_peers("sync_ability_hud", managers.game_play_central:get_heist_timer() + time_left, time_total)
 end
-function SHDHUDCriminalBase:set_ability_radial(data)
-	-- set ability meter static progress
+
+function SHDHUDPlayer:set_ability_radial(data)
+	-- set ability meter static progress?
+	local throwables = self._loadout_equipment_panel:child("throwables")
+	local bg = throwables:child("bg")
+	bg:set_visible(data.current > 0)
+	bg:set_w(throwables:w() * data.current/data.total)
 end
 
-function SHDHUDCriminalBase:set_custom_radial(data)
+function SHDHUDPlayer:set_custom_radial(data)
 	-- ????
 end
 

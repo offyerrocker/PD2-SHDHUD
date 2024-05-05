@@ -55,10 +55,38 @@ function anim.animate_gradient_recharge(o,o2,duration,frequency,color_1,color_2)
 			color_transparent
 		})
 		o2:set_x(lerp_total * o:w())
-		
 	end
 	
 	
+end
+
+function anim.animate_resize_linear(o,duration,to_w,to_h)
+	local from_w,from_h = o:size()
+	local delta_w = to_w and from_w and (to_w - from_w)
+	local delta_h = to_h and from_h and (to_h - from_h)
+	local t,dt = 0,0
+	
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		local lerp = t/duration
+		
+		if delta_h and delta_w then
+			o:set_size(from_w + (delta_w * lerp),from_h + (delta_h * lerp))
+		elseif delta_w then
+			o:set_w(from_w + (delta_w * lerp))
+		elseif delta_h then
+			o:set_h(from_h + (delta_h * lerp))
+		end
+	end
+	
+	if to_w and to_h then
+		o:set_size(to_w,to_h)
+	elseif to_w then
+		o:set_w(to_w)
+	elseif to_h then
+		o:set_h(to_h)
+	end
 end
 
 function anim.animate_resize_sq(o,duration,to_w,to_h)
