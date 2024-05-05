@@ -1,15 +1,25 @@
 local SHDHUDPanel = class()
 
 function SHDHUDPanel:init(parent,params)
+--[[
 	self._parent = parent
 	local panel = parent:get_panel():panel({
 		name = params.name
 	})
 	self._panel = panel
+	--]]
 end
 
 function SHDHUDPanel:panel()
 	return self._panel
+end
+
+function SHDHUDPanel:show()
+	self._panel:show()
+end
+
+function SHDHUDPanel:hide()
+	self._panel:hide()
 end
 
 function SHDHUDPanel.add_progress_bg(panel)
@@ -48,7 +58,7 @@ function SHDHUDPanel.add_blur_bg(panel)
 	local w,h = panel:size()
 	local blur = panel:bitmap({
 		name = "auto_blur",
-		color = Color.white,
+		color = Color(1,1,1),
 		texture = "guis/textures/test_blur_df",
 		render_template = "VertexColorTexturedBlur3D",
 		valign = "grow",
@@ -60,7 +70,7 @@ function SHDHUDPanel.add_blur_bg(panel)
 	
 	local bg = panel:rect({
 		name = "auto_bg",
-		color = Color.black,
+		color = Color(0,0,0),
 		alpha = 0.1,
 		valign = "grow",
 		halign = "grow",
@@ -111,9 +121,9 @@ end
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection
 function SHDHUDPanel:save()
-	local data = {}
+	local out_data = {}
 	
-	return data
+	return out_data
 end
 
 -- setup the visual hud elements with the provided data

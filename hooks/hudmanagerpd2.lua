@@ -1,5 +1,5 @@
 local SHDHUDPlayer = SHDHUDCore:require("classes/SHDHUDPlayer")
-local SHDHUDTeammate = SHDHUDCore:require("classes/SHDHUDTeammate")
+local SHDHUDCriminalBase = SHDHUDCore:require("classes/SHDHUDCriminalBase")
 
 Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_setupplayerhud",function(self,hud)
 	local new_ws = managers.gui_data:create_fullscreen_workspace("shdhud")
@@ -8,14 +8,14 @@ Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_se
 	SHDHUDCore._testws = new_ws
 	SHDHUDCore._panel = master_panel
 	self._shdhud_teammates = {}
-	local MAX_PLAYERS = 4
+	local MAX_PLAYERS = _G.BigLobbyGlobals and _G.BigLobbyGlobals.num_players_settings or 4
 	for i=1,MAX_PLAYERS,1 do 
 		local hud
 		if i == HUDManager.PLAYER_PANEL then
 			hud = SHDHUDPlayer:new(master_panel,i)
 			self._shdhud_player = hud
 		else
-			hud = SHDHUDTeammate:new(master_panel,i)
+			hud = SHDHUDCriminalBase:new(master_panel,i)
 		end
 		self._shdhud_teammates[i] = hud
 	end
