@@ -362,6 +362,38 @@ function HUDManager:set_cable_ties_amount(i, amount)
 end
 
 
+	-- Throwables
+	
+Hooks:OverrideFunction(HUDManager,"set_teammate_grenades",function(self,i,data)
+	self._shdhud_teammates[i]:set_grenades(data)
+end)
+
+Hooks:OverrideFunction(HUDManager,"set_teammate_grenades_amount",function(self,i,data)
+	self._shdhud_teammates[i]:set_grenades_amount(data)
+end)
+
+Hooks:OverrideFunction(HUDManager,"set_teammate_grenade_cooldown",function(self,i,data)
+	self._shdhud_teammates[i]:set_grenade_cooldown(data)
+end)
+
+Hooks:OverrideFunction(HUDManager,"set_ability_icon",function(self,i,icon)
+	self._shdhud_teammates[i]:set_ability_icon(icon)
+end)
+
+Hooks:OverrideFunction(HUDManager,"set_teammate_ability_radial",function(self,i,data)
+	self._shdhud_teammates[i]:set_ability_radial(data)
+end)
+
+Hooks:OverrideFunction(HUDManager,"activate_teammate_ability_radial",function(self,i,time_left,time_total)
+	self._shdhud_teammates[i]:activate_ability_radial(time_left,time_total)
+end)
+
+Hooks:OverrideFunction(HUDManager,"set_teammate_custom_radial",function(self,i,data)
+	self._shdhud_teammates[i]:set_custom_radial(data)
+end)
+
+
+
 do return end
 
 
@@ -542,31 +574,3 @@ end
 function HUDManager:set_stored_health(stored_health_ratio)
 --	self._teammate_panels[HUDManager.PLAYER_PANEL]:set_stored_health(stored_health_ratio)
 end
-
-
-
-	-- Grenades/Throwables/Abilities
-function HUDManager:set_player_custom_radial(data)
---	self:set_teammate_custom_radial(HUDManager.PLAYER_PANEL, data)
-end
-
-function HUDManager:set_teammate_custom_radial(i, data)
---	self._teammate_panels[i]:set_custom_radial(data)
-end
-
-function HUDManager:set_teammate_ability_radial(i, data)
---	self._teammate_panels[i]:set_ability_radial(data)
-end
-
-function HUDManager:activate_teammate_ability_radial(i, time_left, time_total)
---	self._teammate_panels[i]:activate_ability_radial(time_left, time_total)
-end
-
-function HUDManager:set_cable_tie(i, data)
---	self._teammate_panels[i]:set_cable_tie(data)
-end
-
-function HUDManager:set_cable_ties_amount(i, amount)
---	self._teammate_panels[i]:set_cable_ties_amount(amount)
-end
-

@@ -130,6 +130,30 @@ function SHDHUDCriminalBase:set_cable_ties(i, amount)
 
 end
 
+function SHDHUDCriminalBase:set_grenades(data)
+
+end
+function SHDHUDCriminalBase:set_grenade_cooldown(data)
+
+end
+function SHDHUDCriminalBase:set_ability_icon(icon)
+
+end
+function SHDHUDCriminalBase:set_grenades_amount(data)
+
+end
+function SHDHUDCriminalBase:activate_ability_radial(data)
+
+end
+function SHDHUDCriminalBase:set_ability_radial(data)
+
+end
+
+function SHDHUDCriminalBase:set_custom_radial(data)
+
+end
+
+
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection
 function SHDHUDCriminalBase:save()

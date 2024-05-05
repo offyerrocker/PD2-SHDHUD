@@ -1427,6 +1427,143 @@ function SHDHUDCriminalBase:set_cable_ties(amount)
 	})
 end
 
+
+function SHDHUDCriminalBase:set_grenades(data)
+	if not PlayerBase.USE_GRENADES then
+		return
+	end
+	local throwables = self._loadout_equipment_panel:child("throwables")
+	
+	local texture, texture_rect = tweak_data.hud_icons:get_icon_data(data.icon, {
+		0,
+		0,
+		32,
+		32
+	})
+	
+	throwables:child("icon"):set_image(texture,unpack(texture_rect))
+	
+	self:set_grenades_amount(data)
+end
+function SHDHUDCriminalBase:set_grenades_amount(data)
+	if not PlayerBase.USE_GRENADES then
+		return
+	end
+	local throwables = self._loadout_equipment_panel:child("throwables")
+	
+	local MAX_DIGITS = 2
+	local color_full = SHDHUDCore:get_color("player_hud_loadout_full")
+	local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
+	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
+	
+	self.set_number_label(throwables:child("amount_1"),data.amount,MAX_DIGITS,{
+		color_full,
+		color_empty,
+		color_partial
+	})
+end
+
+function SHDHUDCriminalBase:set_grenade_cooldown(data)
+	local throwables = self._loadout_equipment_panel:child("throwables")
+	local progress_bg = throwables:child("progress_bg")
+	local progress_bobber = throwables:child("progress_bobber")
+	-- start animate grenade cooldown (gradient)
+	
+	progress_bg:stop()
+	
+	local function animate_recharge(o,duration,end_time,frequency,min_a,max_a,color_1,color_2)
+		o:show()
+		
+		color_1 = color_1 or Color("5c5c5c") -- main color
+		color_2 = color_2 or Color("ffffff") -- pulse color
+		local color_delta = color_2 - color_1
+		local color_transparent = color_1:with_alpha(0)
+		local delta_a = max_a - min_a
+		local t = 0
+		repeat 
+			local now = managers.game_play_central:get_heist_timer()
+			local time_left = end_time - now
+			local progress = math.clamp(1 - time_left / duration, 0, 1)
+			
+			local t_rad = 180 * t
+			local pulse_t = (1 - math.cos(t_rad / frequency)) / 2
+			
+			o:set_alpha(min_a + (delta_a * pulse_t))
+			
+			local color_lerp = color_1 + (color_delta * pulse_t)
+			local lerp_mid
+			if math.sin(t_rad) / frequency <= 0 then
+				lerp_mid = progress
+			else
+				lerp_mid = progress * pulse_t
+			end
+		
+			o:set_gradient_points({
+				0,
+				color_1,
+				
+				lerp_mid,
+				color_lerp,
+				
+				lerp_mid+0.01,
+				color_1,
+				
+				progress,
+				color_1,
+				
+				progress+0.01,
+				color_transparent,
+				
+				1,
+				color_transparent
+			})
+			t = t + coroutine.yield()
+		until time_left <= 0
+		o:hide()
+	end
+	
+	local end_time = data and data.end_time
+	local duration = data and data.duration
+	
+	if not end_time or not duration then
+		-- stop animation
+		-- set cooldown to 0
+		progress_bg:hide()
+		return
+	end
+	local frequency = 1
+	
+	local color_1 = nil
+	local color_2 = nil
+	local min_a = 0.33
+	local max_a = 0.5
+	
+	progress_bg:animate(animate_recharge,duration,end_time,frequency,min_a,max_a,color_1,color_2)
+	--SHDAnimLibrary.animate_gradient_recharge(throwables:child("progress_bg"),throwables:child("progress_bobber"),duration,frequency,color_1,color_2)
+	
+	managers.network:session():send_to_peers("sync_grenades_cooldown", end_time, duration)
+end
+function SHDHUDCriminalBase:set_ability_icon(icon)
+	-- the icon that appears in the center of the health radial, while an ability is active
+end
+function SHDHUDCriminalBase:activate_ability_radial(data)
+	-- start radial ability duration animation
+
+
+	local current_time = managers.game_play_central:get_heist_timer()
+	local end_time = current_time + time_left
+
+	managers.network:session():send_to_peers("sync_ability_hud", end_time, time_total)
+end
+function SHDHUDCriminalBase:set_ability_radial(data)
+	-- set ability meter static progress
+end
+
+function SHDHUDCriminalBase:set_custom_radial(data)
+	-- ????
+end
+
+
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection
 function SHDHUDPlayer:save()
