@@ -1,6 +1,6 @@
-local SHDHUDTeammate = SHDHUDCore:require("classes/SHDHUDTeammate")
+local SHDHUDCriminalBase = SHDHUDCore:require("classes/SHDHUDCriminalBase")
 local SHDAnimLibrary = SHDHUDCore:require("classes/SHDHUDAnimations")
-local SHDHUDPlayer = class(SHDHUDTeammate)
+local SHDHUDPlayer = class(SHDHUDCriminalBase)
 
 local DEBUG_VISIBLE = false
 

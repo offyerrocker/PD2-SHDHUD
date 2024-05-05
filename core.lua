@@ -115,6 +115,13 @@ end
 
 SHDHUDCore.SORT_COLORS = SHDHUDCore.SORT_COLORS or (SavePath .. "shdhud_layout.ini")
 
+SHDHUDCore._fonts = {
+	borda_semibold = "fonts/borda_semibold",
+	borda_regular = "fonts/borda_regular",
+	borda_demibold = "fonts/borda_demibold"
+}
+
+
 SHDHUDCore.DEFAULT_SETTINGS = {
 	hi = "yes"
 }
@@ -184,6 +191,9 @@ end
 
 local LIP = SHDHUDCore:require("classes/LIP")
 
+function SHDHUDCore:get_font(id)
+
+end
 
 function SHDHUDCore:get_color(id)
 	return id and self._colors[id] or Color.white
