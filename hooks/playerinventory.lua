@@ -1,0 +1,5 @@
+Hooks:PostHook(PlayerInventory,"init","shdhud_playerinventory_init",function(self)
+	self:add_listener("shdhud_on_weapon_switch",{"equip"},function(...)
+		--Print("Set selected weapon",...)
+	end)
+end)

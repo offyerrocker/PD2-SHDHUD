@@ -6,7 +6,10 @@ local DEBUG_VISIBLE = false
 
 
 function SHDHUDPlayer.create_backpack_label(parent,name)
-
+	
+	local text_color = SHDHUDCore:get_color("player_hud_backpack_text")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
+	
 	if alive(parent:child(name)) then
 		parent:remove(parent:child(name))
 	end
@@ -23,7 +26,7 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 	
 	local label = panel:text({
 		name = "label",
-		color = Color.white,
+		color = text_color,
 		text = "00",
 		font = "fonts/borda_semibold",
 		font_size = 20,
@@ -36,7 +39,7 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 	
 	local fg = panel:rect({
 		name = "fg",
-		color = Color("ff8000"),
+		color = highlight_color,
 		alpha = 0.5,
 		layer = 0,
 		valign = "grow",
@@ -52,6 +55,10 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		parent:remove(parent:child(name))
 	end
 	
+	local icon_color = SHDHUDCore:get_color("player_hud_deployable_icon")
+	local text_color = SHDHUDCore:get_color("player_hud_deployable_text")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
+	
 	local w = parent:w()/2
 	local h = parent:h()
 	local panel = parent:panel({
@@ -64,7 +71,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 	
 	local bg = panel:rect({
 		name = "bg",
-		color = Color("ff8000"),
+		color = highlight_color,
 		alpha = 0.5,
 		layer = 0,
 		visible = false
@@ -75,7 +82,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		name = "icon",
 		texture = icon,
 		texture_rect = texture_rect,
-		color = Color.white,
+		color = icon_color,
 		x = 0,
 		w = 16,
 		h = 16,
@@ -86,7 +93,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 	icon:set_center_y(c_y)
 	local amount_1 = panel:text({
 		name = "amount_1",
-		color = Color.white,
+		color = text_color,
 		text = "00",
 		font = "fonts/borda_semibold",
 		font_size = 18, --12
@@ -100,7 +107,7 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 	})
 	local amount_2 = panel:text({
 		name = "amount_2",
-		color = Color.white,
+		color = text_color,
 		text = "00",
 		font = "fonts/borda_semibold",
 		font_size = 12,
@@ -122,6 +129,10 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 		parent:remove(parent:child(name))
 	end
 	
+	local icon_color = SHDHUDCore:get_color("player_hud_equipment_icon")
+	local text_color = SHDHUDCore:get_color("player_hud_equipment_text")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
+	
 	local w = parent:w()/2
 	local h = parent:h()
 	local panel = parent:panel({
@@ -134,7 +145,7 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 	
 	local bg = panel:rect({
 		name = "bg",
-		color = Color("ff8000"),
+		color = highlight_color,
 		alpha = 0.5,
 		layer = 0,
 		visible = false
@@ -145,7 +156,7 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 		name = "icon",
 		texture = icon,
 		texture_rect = texture_rect,
-		color = Color.white,
+		color = icon_color,
 		x = 0,
 		w = 16,
 		h = 16,
@@ -156,7 +167,7 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 	icon:set_center_y(c_y)
 	local amount_1 = panel:text({
 		name = "amount_1",
-		color = Color.white,
+		color = text_color,
 		text = "00",
 		font = "fonts/borda_semibold",
 		font_size = 18,
@@ -172,7 +183,9 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 	return panel
 end
 
-function SHDHUDPlayer:init(master_panel)
+function SHDHUDPlayer:init(master_panel,index)
+	self._id = index
+	self._alt_ammo = managers.user:get_setting("alt_hud_ammo")
 	
 	self.config = {
 		use_armor_segments = true,
@@ -182,18 +195,19 @@ function SHDHUDPlayer:init(master_panel)
 		armor_segment_margin_large = 0.5,
 		armor_segments_total = 5,
 		armor_low_threshold = 0.25, -- below 25% will be considered "low health"
-		low_armor_anim = nil, -- will hold the coroutine for alpha flashing health hud anim
 		use_health_segments = false,
 		health_segment_amount = 20,
 		health_segment_group_size = 5,
 		health_segment_margin_small = 0.25,
 		health_segment_margin_large = 0.5,
 		health_segments_total = 5,
-		health_low_threshold = 0, -- effectively disabled low health flashing warnings
-		low_health_anim = nil -- will hold the coroutine for alpha flashing health hud anim
+		health_low_threshold = 0 -- effectively disabled low health flashing warnings
 	}
 	
 	self.data = {
+		low_armor_anim = nil, -- will hold the coroutine for alpha flashing health hud anim
+		low_health_anim = nil, -- will hold the coroutine for alpha flashing health hud anim
+		revives_current = 0,
 		health_current = 0,
 		health_total = 0,
 		armor_current = 0,
@@ -201,24 +215,35 @@ function SHDHUDPlayer:init(master_panel)
 		low_health_anims = {},
 		armor_segment_remainder_w = 4,
 		armor_segment_w = 9,
-		health_segment_w = 9
+		health_segment_w = 9,
+		
+		equipped_weapon_index = 0,
+		weapons = {
+			{
+				magazine_current = 0,
+				magazine_max = 0,
+				reserve_current = 0,
+				reserve_max = 0,
+				is_underbarrel = 0
+			}
+		}
 	}
 	
-	local player_panel = master_panel:panel({
-		name = "player_panel",
+	local hud_panel = master_panel:panel({
+		name = "hud_panel",
 		layer = 1,
 		w = 256,
 		h = 100,
 		x = 640,
 		y = 500
 	})
-	self._panel = player_panel
+	self._panel = hud_panel
 	
 	self:create_hud()
 end
 
 function SHDHUDPlayer:create_hud()
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	
 	local vitals = self:create_vitals()
 	self._vitals_panel = vitals
@@ -239,18 +264,28 @@ function SHDHUDPlayer:create_hud()
 end
 
 function SHDHUDPlayer:create_vitals()
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	
-	local vitals = player_panel:panel({
+	local hat_color = SHDHUDCore:get_color("player_hud_health_hat")
+	local cradle_color = SHDHUDCore:get_color("player_hud_health_cradle")
+	
+	local base_h = 20
+	local bonus_unfold_h = 4 + 4
+
+	local vitals = hud_panel:panel({
 		name = "vitals",
 		w = 154,
-		h = 20
+		h = base_h + bonus_unfold_h,
+		x = 0,
+		y = bonus_unfold_h,
+		valign = "grow",
+		halign = "grow"
 	})
 	local vitals_debug = vitals:rect({
 		name = "vitals_debug",
 		color = Color.red,
 		visible = DEBUG_VISIBLE,
-		alpha = 0.2,
+		alpha = 0.1,
 		valign = "grow",
 		halign = "grow"
 	})
@@ -276,6 +311,7 @@ function SHDHUDPlayer:create_vitals()
 		name = "armor_panel",
 		w = vitals:w(),
 		h = 8,
+		y = bonus_unfold_h,
 		halign = "grow",
 		valign = "grow"
 	})
@@ -287,7 +323,7 @@ function SHDHUDPlayer:create_vitals()
 	
 	local armor_debug = armor_panel:rect({
 		name = "armor_debug",
-		color = Color.red,
+		color = Color.green,
 		visible = DEBUG_VISIBLE,
 		alpha = 0.5,
 		valign = "grow",
@@ -297,12 +333,13 @@ function SHDHUDPlayer:create_vitals()
 	
 	local health_panel = vitals:panel({
 		name = "health_panel",
-		w = 154,
+		w = vitals:w(),
 		h = 8,
-		y = armor_panel:bottom(),
+--		y = armor_panel:bottom(),
 		halign = "grow",
 		valign = "grow"
 	})
+	health_panel:set_bottom(vitals:h())
 	self._health_panel = health_panel
 	
 	--self:create_health_bar(health_panel,100)
@@ -319,24 +356,28 @@ function SHDHUDPlayer:create_vitals()
 	--]]
 	local health_hat = health_panel:rect({
 		name = "health_hat",
-		color = Color.white,
+		color = hat_color,
 		w = 2,
 		h = 5,
 		x = 150,
 		y = 1,
+		valign = "grow",
+		halign = "grow",
 		layer = 5
 	})
 	local health_cradle = health_panel:polyline({
 		name = "health_cradle",
-		color = Color("cccccc"),
+		color = cradle_color,
 		x = 2,
 		y = 4,
 		points = {
 			Vector3(0,0,0),
 			Vector3(0,3,0),
-			Vector3(150,3,0),
-			Vector3(150,0,0)
+			Vector3(health_hat:x(),3,0),
+			Vector3(health_hat:x(),0,0)
 		},
+		valign = "bottom",
+		halign = "grow",
 		line_width = 1.1,
 		closed = false,
 		layer = 4
@@ -348,6 +389,11 @@ end
 function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 	local h_margin = 2
 	local v_margin = 2
+	
+	local fg_color = SHDHUDCore:get_color("player_hud_health_bar_fg")
+	local bg_color = SHDHUDCore:get_color("player_hud_health_bar_bg")
+	local divider_color = SHDHUDCore:get_color("player_hud_dividers")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
 	
 	local max_w = panel:w() - (h_margin * 2)
 	local max_h = 4
@@ -369,7 +415,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 	})
 	local frame_fg = frame:rect({
 		name = "frame_fg",
-		color = Color.black,
+		color = highlight_color,
 		x = 0,
 		y = 0,
 		w = max_w,
@@ -382,13 +428,6 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 	})
 	
 	if self.config.use_armor_segments then
-		--[[
-		armor_segment_amount = 20, -- how much armor is in one segment
-		armor_segment_group_size = 5, -- how many armor segments are in one group (20 * 5 = 100 ap in one segment group)
-		use_health_segments = false,
-		health_segment_amount = 20,
-		health_segment_group_size = 5
-		--]]
 		local segment_group_size = self.config.armor_segment_group_size
 		local minor_ratio = self.config.armor_segment_margin_small
 		local major_ratio = self.config.armor_segment_margin_large
@@ -413,7 +452,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 		for i = 1,num_segments_max,1 do
 			local segment = frame:rect({
 				name = string.format("segment_%i",i),
-				color = Color.white,
+				color = fg_color,
 				x = x,
 				y = 0,
 				w = segment_w,
@@ -426,7 +465,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 			})
 			local segment_bg = frame:rect({
 				name = string.format("segment_%i_bg",i),
-				color = Color.black,
+				color = bg_color,
 				x = x,
 				y = 0,
 				w = segment_w,
@@ -459,7 +498,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 	else
 		local segment = frame:rect({
 			name = "segment_1",
-			color = Color.white,
+			color = fg_color,
 			x = 0,
 			y = 0,
 			w = max_w,
@@ -471,7 +510,7 @@ function SHDHUDPlayer:create_armor_bar(panel,max_amount)
 		})
 		local segment_bg = frame:rect({
 			name = "segment_1_bg",
-			color = Color.black,
+			color = bg_color,
 			x = 0,
 			y = 0,
 			w = max_w,
@@ -490,6 +529,11 @@ end
 function SHDHUDPlayer:create_health_bar(panel,max_amount)
 	local h_margin = 2
 	local v_margin = 2
+	
+	local fg_color = SHDHUDCore:get_color("player_hud_health_bar_fg")
+	local bg_color = SHDHUDCore:get_color("player_hud_health_bar_bg")
+	local divider_color = SHDHUDCore:get_color("player_hud_dividers")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
 	
 	local max_w = panel:w() - (h_margin * 2)
 	local max_h = 4
@@ -512,7 +556,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 	
 	local frame_fg = frame:rect({
 		name = "frame_fg",
-		color = Color.black,
+		color = highlight_color,
 		x = 0,
 		y = 0,
 		w = max_w,
@@ -545,7 +589,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 		for i = 1,num_segments_max,1 do
 			local segment = frame:rect({
 				name = string.format("segment_%i",i),
-				color = Color.white,
+				color = fg_color,
 				x = x,
 				y = 0,
 				w = segment_w,
@@ -558,7 +602,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 			})
 			local segment_bg = frame:rect({
 				name = string.format("segment_%i_bg",i),
-				color = Color.black,
+				color = bg_color,
 				x = x,
 				y = 0,
 				w = segment_w,
@@ -590,7 +634,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 	else
 		local segment = frame:rect({
 			name = "segment_1",
-			color = Color("ff8000"),
+			color = fg_color,
 			x = 0,
 			y = 0,
 			w = max_w,
@@ -602,7 +646,7 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 		})
 		local segment_bg = frame:rect({
 			name = "segment_1_bg",
-			color = Color.black,
+			color = bg_color,
 			x = 0,
 			y = 0,
 			w = max_w,
@@ -619,10 +663,13 @@ function SHDHUDPlayer:create_health_bar(panel,max_amount)
 end
 
 function SHDHUDPlayer:create_weapons()
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	local vitals = self._vitals_panel
 	
-	local weapons = player_panel:panel({
+	local divider_color = SHDHUDCore:get_color("player_hud_dividers")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
+	
+	local weapons = hud_panel:panel({
 		name = "weapons",
 		w = 72,
 		h = 48,
@@ -637,8 +684,8 @@ function SHDHUDPlayer:create_weapons()
 		w = weapons:w(),
 		h = 2,
 		gradient_points = {
-			0,Color.white:with_alpha(0),
-			1,Color.white:with_alpha(0.5)
+			0,divider_color:with_alpha(0),
+			1,divider_color:with_alpha(0.5)
 		},
 		layer = 3,
 		halign = "grow",
@@ -652,8 +699,8 @@ function SHDHUDPlayer:create_weapons()
 		w = weapons:w(),
 		h = 2,
 		gradient_points = {
-			0,Color.white:with_alpha(0.5),
-			1,Color.white:with_alpha(0)
+			0,divider_color:with_alpha(0.5),
+			1,divider_color:with_alpha(0)
 		},
 		halign = "grow",
 		valign = "bottom"
@@ -668,7 +715,7 @@ function SHDHUDPlayer:create_weapons()
 	})
 	local equipped_weapon_fg = equipped_weapon_panel:rect({
 		name = "equipped_weapon_fg",
-		color = Color("ff8000"),
+		color = highlight_color,
 		w = equipped_weapon_panel:w(),
 		h = equipped_weapon_panel:h(),
 		valign = "grow",
@@ -686,8 +733,8 @@ function SHDHUDPlayer:create_weapons()
 		h = 44,
 		alpha = 0.5,
 		gradient_points = {
-			0,Color.white:with_alpha(0),
-			1,Color.white:with_alpha(0.5)
+			0,divider_color:with_alpha(0),
+			1,divider_color:with_alpha(0.5)
 		},
 		layer = 3,
 		halign = "right",
@@ -735,7 +782,7 @@ function SHDHUDPlayer:create_weapons()
 		name = "backpack_weapons_panel_blur",
 		texture = "guis/textures/test_blur_df",
 		render_template = "VertexColorTexturedBlur3D",
-		color = Color.white,
+		color = Color(1,1,1),
 		w = backpack_weapons_panel:w(),
 		h = backpack_weapons_panel:h(),
 		valign = "grow",
@@ -753,10 +800,12 @@ function SHDHUDPlayer:create_weapons()
 end
 
 function SHDHUDPlayer:create_deployables()
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	local weapons = self._weapons_panel
 	
-	local deployables_panel = player_panel:panel({
+	local divider_color = SHDHUDCore:get_color("player_hud_dividers")
+	
+	local deployables_panel = hud_panel:panel({
 		name = "deployables_panel",
 		w = 78,
 		h = 24,
@@ -781,8 +830,8 @@ function SHDHUDPlayer:create_deployables()
 		w = deployables_panel:w(),
 		h = 2,
 		gradient_points = {
-			0,Color.white:with_alpha(0),
-			1,Color.white:with_alpha(0.5)
+			0,divider_color:with_alpha(0),
+			1,divider_color:with_alpha(0.5)
 		},
 		layer = 3,
 		halign = "grow",
@@ -797,8 +846,8 @@ function SHDHUDPlayer:create_deployables()
 		h = 2,
 		alpha = 0.5,
 		gradient_points = {
-			0,Color.white:with_alpha(0.5),
-			1,Color.white:with_alpha(0)
+			0,divider_color:with_alpha(0.5),
+			1,divider_color:with_alpha(0)
 		},
 		layer = 3,
 		halign = "grow",
@@ -807,16 +856,21 @@ function SHDHUDPlayer:create_deployables()
 	self.add_blur_bg(deployables_panel)
 	
 	local deployable_1 = SHDHUDPlayer.create_deployable_box(deployables_panel,"deployable_1")
+	self.add_progress_bg(deployable_1)
 	local deployable_2 = SHDHUDPlayer.create_deployable_box(deployables_panel,"deployable_2")
+	self.add_progress_bg(deployable_2)
 	deployable_2:set_x(deployable_1:right())
 	return deployables_panel
 end
 
 function SHDHUDPlayer:create_loadout_equipment()
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	local deployables_panel = self._deployables_panel
 	
-	local loadout_equipment_panel = player_panel:panel({
+	local divider_color = SHDHUDCore:get_color("player_hud_dividers")
+	local highlight_color = SHDHUDCore:get_color("player_hud_highlight")
+	
+	local loadout_equipment_panel = hud_panel:panel({
 		name = "loadout_equipment_panel",
 		w = 78,
 		h = 22,
@@ -825,7 +879,7 @@ function SHDHUDPlayer:create_loadout_equipment()
 	})
 	local loadout_equipment_panel_rect = loadout_equipment_panel:rect({
 		name = "loadout_equipment_panel_rect",
-		color = Color.white,
+		color = highlight_color,
 		w = loadout_equipment_panel:w(),
 		h = loadout_equipment_panel:h(),
 		valign = "grow",
@@ -842,8 +896,8 @@ function SHDHUDPlayer:create_loadout_equipment()
 		w = loadout_equipment_panel:w(),
 		h = 2,
 		gradient_points = {
-			0,Color.white:with_alpha(0),
-			1,Color.white:with_alpha(0.5)
+			0,divider_color:with_alpha(0),
+			1,divider_color:with_alpha(0.5)
 		},
 		layer = 3,
 		halign = "grow",
@@ -858,8 +912,8 @@ function SHDHUDPlayer:create_loadout_equipment()
 		h = 2,
 		alpha = 0.5,
 		gradient_points = {
-			0,Color.white:with_alpha(0.5),
-			1,Color.white:with_alpha(0)
+			0,divider_color:with_alpha(0.5),
+			1,divider_color:with_alpha(0)
 		},
 		layer = 3,
 		halign = "grow",
@@ -870,6 +924,7 @@ function SHDHUDPlayer:create_loadout_equipment()
 	do
 		local icon,rect = tweak_data.hud_icons:get_icon_data("frag_grenade")
 		throwable:child("icon"):set_image(icon,unpack(rect))
+		self.add_progress_bg(throwable)
 	end
 	local cableties = self.create_loadout_equipment_box(loadout_equipment_panel,"cableties")
 	do
@@ -881,11 +936,10 @@ function SHDHUDPlayer:create_loadout_equipment()
 end
 
 function SHDHUDPlayer:create_buffs()
-
-	local player_panel = self._panel
+	local hud_panel = self._panel
 	local weapons = self._weapons_panel
 	
-	local buffs_panel = player_panel:panel({
+	local buffs_panel = hud_panel:panel({
 		name = "buffs_panel",
 		w = 152,
 		h = 64,
@@ -904,41 +958,81 @@ function SHDHUDPlayer:create_buffs()
 	return buffs_panel
 end
 
--- slot is ignored since there is currently only one mag readout
--- but i'll keep my options open
+function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
+	--Print("Set selected",id)
+	if self.data.equipped_weapon_index ~= id then
+		self.data.equipped_weapon_index = id
+		self:upd_ammo_amount(selection_index)
+	end
+end
+
+function SHDHUDPlayer:upd_ammo_amount(selection_index)
+	local ammo_data = self.data.weapons[selection_index]
+	if ammo_data then
+		local magazine_current = ammo_data.magazine_current
+		local magazine_max = ammo_data.magazine_max
+		local reserve_current = ammo_data.reserve_current
+		local reserve_max = ammo_data.reserve_max
+		if self._alt_ammo then
+			reserve_current = math.max(0, reserve_current - magazine_max - (magazine_current - magazine_max))
+		end
+		self:set_magazine_amount(selection_index,magazine_current,magazine_max)
+		self:set_reserve_amount(selection_index,reserve_current,reserve_max)
+	end
+end
+
+function SHDHUDPlayer:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
+	local wpns_data = self.data.weapons[selection_index]
+	if wpns_data then
+		wpns_data.magazine_max = max_clip
+		wpns_data.magazine_current = current_clip
+		wpns_data.reserve_max = max_left
+		wpns_data.reserve_current = current_left
+	else
+		self.data.weapons[selection_index] = {
+			magazine_current = 0,
+			magazine_max = 0,
+			reserve_current = 0,
+			reserve_max = 0
+		}
+	end
+	if selection_index == self.data.equipped_weapon_index then
+		self:upd_ammo_amount(selection_index)
+	end
+end
+
 function SHDHUDPlayer:set_magazine_amount(slot,current,total)
+	self:_set_magazine_amount(slot,current,total)
+end
+
+function SHDHUDPlayer:_set_magazine_amount(slot,current,total)
 	local weapons = self._weapons_panel
 	local equipped_weapon_panel = weapons:child("equipped_weapon_panel")
 	local mag_label = equipped_weapon_panel:child("mag_label")
 	local NUM_DIGITS = 2
 	
-	local primary_color
-	local full_color = Color.white
-	local partial_color = Color("aaaaaa")
-	local empty_color = Color("777777")
-	if total > 1 then
-		if current < 1 then
-			-- empty
-			primary_color = partial_color
-		else
-			primary_color = full_color
-			-- not empty
-		--elseif total / current < 3 then
-			-- low ammo (less than 33%)
-		end
-	else
-		if current == 0 then
-			primary_color = partial_color
-		else
-			primary_color = full_color
-		end
-	end
-	
-	self.set_number_label(mag_label,current,NUM_DIGITS,{primary_color,empty_color})
+	local full_color = SHDHUDCore:get_color("player_hud_ammo_magazine_full")
+	local partial_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_2")
+	local empty_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_1")
+	self.set_number_label(mag_label,current,NUM_DIGITS,{full_color,empty_color,partial_color})
 end
 
-
 function SHDHUDPlayer:set_reserve_amount(slot,current,total)
+	self:_set_reserve_amount(slot,current,total)
+end
+
+function SHDHUDPlayer:_set_reserve_amount(slot,current,total)
+	local weapons = self._weapons_panel
+	local equipped_weapon_panel = weapons:child("equipped_weapon_panel")
+	local reserve_label = equipped_weapon_panel:child("reserve_label")
+	local NUM_DIGITS = 3
+	
+	local full_color = SHDHUDCore:get_color("player_hud_ammo_reserve_full")
+	local empty_color = SHDHUDCore:get_color("player_hud_ammo_reserve_empty_1")
+	self.set_number_label(reserve_label,current,NUM_DIGITS,{full_color,empty_color})
+end
+
+function SHDHUDPlayer:set_backpack_amount(slot,current,total)
 	local weapons = self._weapons_panel
 	local backpack_weapons_panel = weapons:child("backpack_weapons_panel")
 	local reserve = backpack_weapons_panel:child(string.format("backpack_weapon_label_%i",slot))
@@ -947,7 +1041,6 @@ function SHDHUDPlayer:set_reserve_amount(slot,current,total)
 		self.set_number_label(reserve:child("label"),current,NUM_DIGITS,nil)
 	end
 end
-
 
 function SHDHUDPlayer:set_health(data)
 	if data.total ~= self.data.health_total then
@@ -1032,7 +1125,7 @@ function SHDHUDPlayer:_set_health(current,total,revives)
 end
 
 function SHDHUDPlayer:set_revives_amount(amount)
-
+	
 end
 
 function SHDHUDPlayer:set_armor(data)
@@ -1118,18 +1211,108 @@ function SHDHUDPlayer:_set_armor(current,total)
 	end
 end
 
+
+function SHDHUDPlayer.animate_grow_armor_bar(o,duration,to_h,b_y)
+	local from_h = o:h()
+	local delta_h = to_h - from_h
+	local t,dt = 0,0
+	
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		local interp = math.pow(t/duration,2)
+		
+		o:set_h(from_h + (delta_h * interp))
+		o:set_bottom(b_y)
+	end
+	
+	o:set_h(to_h)
+	o:set_bottom(b_y)
+end
+
+function SHDHUDPlayer:fold_armor_bar()
+	local frame = self._armor_panel --:child("frame")
+	
+	
+	local duration = 0.33
+	local to_h = 8
+	local bottom_y = self._health_panel:y()
+	
+	frame:animate(self.animate_grow_armor_bar,duration,to_h,bottom_y)
+end
+
+function SHDHUDPlayer:unfold_armor_bar()
+	local frame = self._armor_panel --:child("frame")
+	local duration = 0.33
+	local to_h = 12
+	local bottom_y = self._health_panel:y()
+	
+	frame:animate(self.animate_grow_armor_bar,duration,to_h,bottom_y)
+end
+
+function SHDHUDPlayer.animate_grow_health_bar(o,duration,to_h,b_y,o2)
+	local from_h = o:h()
+	local delta_h = to_h - from_h
+	local t,dt = 0,0
+	
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		local interp = math.pow(t/duration,2)
+		
+		o:set_h(from_h + (delta_h * interp))
+		o:set_bottom(b_y)
+		o2:set_bottom(o:y())
+	end
+	
+	o:set_h(to_h)
+	o:set_bottom(b_y)
+	o2:set_bottom(o:y())
+end
+
+function SHDHUDPlayer:fold_health_bar()
+	local frame = self._health_panel --:child("frame")
+	local duration = 0.33
+	local to_h = 8
+	local bottom_y = self._vitals_panel:h()
+	
+	frame:animate(self.animate_grow_health_bar,duration,to_h,bottom_y,self._armor_panel)
+end
+
+function SHDHUDPlayer:unfold_health_bar()
+	local frame = self._health_panel --:child("frame")
+	local duration = 0.33
+	local to_h = 12
+	local bottom_y = self._vitals_panel:h()
+	
+	frame:animate(self.animate_grow_health_bar,duration,to_h,bottom_y,self._armor_panel)
+end
+
 -- returns a fresh table with a copy of all of this panel's data,
 -- without saving any references that would impede garbage collection
 function SHDHUDPlayer:save()
-	local data = table.deep_map_copy(self.data)
+	local out_data = SHDHUDPlayer.super.save(self)
 	
-	return data
+	
+	
+	return out_data
 end
 
 -- setup the visual hud elements with the provided data
-function SHDHUDPlayer:load(data)
+function SHDHUDPlayer:load(in_data)
+	self.data = in_data
 	
-	self:_set_armor(data.armor_current,data.armor_total)
+	if self.in_data.health_total == 0 then
+		self._health_panel:child("frame"):hide()
+	end
+	self:_set_health(DISPLAY_MUL * in_data.health_current,DISPLAY_MUL * in_data.health_total,in_data.revives_current)
+	self:set_revives_amount(in_data.revives_current)
+	
+	local DISPLAY_MUL = tweak_data.gui.stats_present_multiplier
+	if self.in_data.armor_total == 0 then
+		self._armor_panel:child("frame"):hide()
+	end
+	self:_set_armor(DISPLAY_MUL * in_data.armor_current,DISPLAY_MUL * in_data.armor_total)
 end
 
 

@@ -85,7 +85,28 @@ SHDHUDCore._LAYOUT_PATH = SHDHUDCore._LAYOUT_PATH or (SavePath .. "shdhud_layout
 SHDHUDCore.DEFAULT_COLORS = { -- this table holds string representations of hex color numbers!
 	white = "ffffff",
 	red = "ff0000",
-	green = "00ff00"
+	green = "00ff00",
+	player_hud_ammo_magazine_full = "ffffff", -- non-empty numbers
+	player_hud_ammo_magazine_empty_1 = "777777", -- for all but least significant empty digits
+	player_hud_ammo_magazine_empty_2 = "aaaaaa", -- for least significant empty digit, if completely empty
+	player_hud_ammo_reserve_full = "999999", -- non-empty numbers
+	player_hud_ammo_reserve_empty_1 = "777777", -- empty numbers
+	player_hud_text_main = "ffffff",
+	player_hud_backpack_text = "ffffff",
+	player_hud_deployable_text = "ffffff",
+	player_hud_deployable_icon = "ffffff",
+	player_hud_loadout_text = "ffffff",
+	player_hud_loadout_icon = "ffffff",
+	player_hud_equipment_text = "ffffff",
+	player_hud_equipment_icon = "ffffff",
+	player_hud_dividers = "ffffff",
+	player_hud_health_hat = "ffffff",
+	player_hud_health_cradle = "cccccc",
+	player_hud_health_bar_fg = "ff8000",
+	player_hud_health_bar_bg = "000000",
+	player_hud_armor_bar_fg = "ffffff",
+	player_hud_armor_bar_bg = "000000",
+	player_hud_highlight = "ff8000" -- signature orange
 }
 SHDHUDCore._colors = {} -- this table holds Color objects!
 for id,color_code in pairs(SHDHUDCore.DEFAULT_COLORS) do 
@@ -163,24 +184,10 @@ end
 
 local LIP = SHDHUDCore:require("classes/LIP")
 
--- load custom assets (not used)
-function SHDHUDCore:load_fonts()
-	local function check_asset_added(path,load_as_ext,actual_ext)
-		local ext_ids = Idstring(load_as_ext)
-		
-		if not (DB and DB:has(ext_ids, path)) then 
-			local full_asset_path = SHDHUDCore._ASSETS_PATH .. path .. "." .. actual_ext
-			BLT.AssetManager:CreateEntry(Idstring(path),ext_ids,full_asset_path)
-		end
-	end
-	check_asset_added("fonts/borda_demibold","font","font")
-	check_asset_added("fonts/borda_demibold","texture","texture")
-	check_asset_added("fonts/borda_regular","font","font")
-	check_asset_added("fonts/borda_regular","texture","texture")
-	check_asset_added("fonts/borda_semibold","font","font")
-	check_asset_added("fonts/borda_semibold","texture","texture")
+
+function SHDHUDCore:get_color(id)
+	return id and self._colors[id] or Color.white
 end
---SHDHUDCore:load_fonts()
 
 -- I/O
 
@@ -249,3 +256,26 @@ function SHDHUDCore.color_to_hex(color)
 		return string.format("%02x%02x%02x",255*color.red,255*color.green,255*color.blue)
 	end
 end
+
+--[[
+
+-- load custom assets (not used)
+function SHDHUDCore:load_fonts()
+	local function check_asset_added(path,load_as_ext,actual_ext)
+		local ext_ids = Idstring(load_as_ext)
+		
+		if not (DB and DB:has(ext_ids, path)) then 
+			local full_asset_path = SHDHUDCore._ASSETS_PATH .. path .. "." .. actual_ext
+			BLT.AssetManager:CreateEntry(Idstring(path),ext_ids,full_asset_path)
+		end
+	end
+	check_asset_added("fonts/borda_demibold","font","font")
+	check_asset_added("fonts/borda_demibold","texture","texture")
+	check_asset_added("fonts/borda_regular","font","font")
+	check_asset_added("fonts/borda_regular","texture","texture")
+	check_asset_added("fonts/borda_semibold","font","font")
+	check_asset_added("fonts/borda_semibold","texture","texture")
+end
+--SHDHUDCore:load_fonts()
+
+--]]
