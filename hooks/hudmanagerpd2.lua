@@ -117,26 +117,36 @@ function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, cur
 end
 
 function HUDManager:_set_weapon(data)
-	self._shdhud_player:add_weapon(data)
 	local unit = data.unit
 	local weapon_base = alive(unit) and unit:base()
-	if weapon_base then
+	if weapon_base and weapon_base.ammo_info then
+		self._shdhud_player:add_weapon(data.inventory_index,weapon_base:ammo_info())
 		for _,underbarrel in pairs(weapon_base:get_all_override_weapon_gadgets()) do
---		local underbarrel = weapon_base:gadget_overrides_weapon_functions()
---		if underbarrel then
 			local td = underbarrel._tweak_data
 			local use_data = td and td.use_data
 			local selection_index = use_data and use_data.selection_index
 			local ammo_info = underbarrel._ammo
 			if selection_index and ammo_info then
-				self._shdhud_player:_add_weapon(
+				self._shdhud_player:add_weapon(
 					selection_index,
-					ammo_info._ammo_max_per_clip,
-					ammo_info._ammo_remaining_in_clip,
-					ammo_info._ammo_total,
-					ammo_info._ammo_max
+					ammo_info._ammo_max_per_clip or 0,
+					ammo_info._ammo_remaining_in_clip or 0,
+					ammo_info._ammo_total or 0,
+					ammo_info._ammo_max or 0
 				)
 				break -- take the first valid underbarrel; there will probably only be one per weapon anyhow
+			end
+		end
+		if data.is_equip then
+			self._shdhud_player:upd_backpack_ammo(data.inventory_index)
+		else
+			local player = managers.player:local_player()
+			if alive(player) then
+				local inventory = player:inventory()
+				local selection_index = inventory and inventory._equipped_selection
+				if selection_index then
+					self._shdhud_player:upd_backpack_ammo(selection_index)
+				end
 			end
 		end
 	end

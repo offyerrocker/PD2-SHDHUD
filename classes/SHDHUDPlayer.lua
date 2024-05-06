@@ -21,7 +21,8 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 		w = w,
 		h = h,
 		valign = "grow",
-		halign = "grow"
+		halign = "grow",
+		visible = false
 	})
 	
 	local label = panel:text({
@@ -954,23 +955,10 @@ function SHDHUDPlayer:create_buffs()
 end
 
 function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
-	--Print("Set selected",id)
 	if self.data.equipped_weapon_index ~= id then
 		self.data.equipped_weapon_index = id
 		self:upd_ammo_amount(id)
 		self:upd_backpack_ammo(id)
-	end
-end
-
-function SHDHUDPlayer:add_weapon(data,...)
-	SHDHUDPlayer.super.add_weapon(self,data,...)
-	local player = managers.player:local_player()
-	if alive(player) then
-		local inventory = player:inventory()
-		local selection_index = inventory and inventory._equipped_selection
-		if selection_index then
-			self:upd_backpack_ammo(selection_index)
-		end
 	end
 end
 
@@ -984,17 +972,15 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	local i = 0
 	for selection_index,ammo_data in ipairs(self.data.weapons) do 
 		if selection_index ~= equipped_index then
-			--table.insert(d,#d+1,ammo_data.magazine_current)
 			i = i + 1
 			local backpack_slot = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",i))
 			if alive(backpack_slot) then
-				--[[
-				self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current,MAX_DIGITS,{
+				backpack_slot:show()
+				self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current or 0,MAX_DIGITS,{
 					color_full,
 					color_empty,
 					color_partial
 				})
-				--]]
 				break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
 			else
 				break

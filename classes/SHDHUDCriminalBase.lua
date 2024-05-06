@@ -85,13 +85,7 @@ function SHDHUDCriminalBase:set_cable_ties(current)
 	
 end
 
-function SHDHUDCriminalBase:add_weapon(data)
-	local index = data.inventory_index
-	local magazine_max,magazine_current,reserve_current,reserve_max = data.unit:ammo_info()
-	self:_add_weapon(index,magazine_max,magazine_current,reserve_current,reserve_max)
-end
-
-function SHDHUDCriminalBase:_add_weapon(index,magazine_max,magazine_current,reserve_current,reserve_max)
+function SHDHUDCriminalBase:add_weapon(index,magazine_max,magazine_current,reserve_current,reserve_max)
 	local wpn_info
 	if self.data.weapons[index] then
 		wpn_info = self.data.weapons[index]
