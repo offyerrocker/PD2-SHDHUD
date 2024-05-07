@@ -990,7 +990,6 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 					color_empty,
 					color_partial
 				})
-				
 			else
 				break
 			end
@@ -1047,12 +1046,15 @@ function SHDHUDPlayer:set_ammo_amount(selection_index,max_clip,current_clip,curr
 		wpns_data.reserve_max = max_left or wpns_data.reserve_max
 		wpns_data.reserve_current = current_left or wpns_data.reserve_current
 	else
+		wpns_data = self:add_weapon(selection_index,max_clip,current_clip,current_left,max_left)
+		--[[
 		self.data.weapons[selection_index] = {
 			magazine_current = current_clip or 0,
 			magazine_max = max_clip or 0,
 			reserve_current = current_left or 0,
 			reserve_max = max_left or 0
 		}
+		--]]
 	end
 	if selection_index == self.data.equipped_weapon_index then
 		local magazine_max = wpns_data.magazine_max

@@ -93,10 +93,11 @@ function SHDHUDCriminalBase:add_weapon(index,magazine_max,magazine_current,reser
 		wpn_info = {}
 		self.data.weapons[index] = wpn_info
 	end
-	wpn_info.magazine_max = magazine_max or wpn_info.magazine_max
-	wpn_info.magazine_current = magazine_current or wpn_info.magazine_current
-	wpn_info.reserve_current = reserve_current or wpn_info.reserve_current
-	wpn_info.reserve_max = reserve_max or wpn_info.reserve_max
+	wpn_info.magazine_max = magazine_max or wpn_info.magazine_max or 0
+	wpn_info.magazine_current = magazine_current or wpn_info.magazine_current or 0
+	wpn_info.reserve_current = reserve_current or wpn_info.reserve_current or 0
+	wpn_info.reserve_max = reserve_max or wpn_info.reserve_max or 0
+	return wpn_info
 end
 
 function SHDHUDCriminalBase:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
