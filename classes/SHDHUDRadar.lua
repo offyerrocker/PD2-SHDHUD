@@ -14,8 +14,10 @@ function SHDHUDRadar:init(parent)
 	
 	local panel = parent:panel({
 		name = "radar",
-		w = 200,
-		h = 200
+		x = 24,
+		y = 0,
+		w = 240,
+		h = 240
 	})
 	self._panel = panel
 	local radar_debug = panel:rect({
@@ -110,7 +112,7 @@ function SHDHUDRadar:init(parent)
 	
 	local range_label = panel:text({
 		name = "range_label",
-		text = "ø90m",
+		text = "ø90m", -- alt Ø
 		font = "fonts/borda_semibold",
 		font_size = 20,
 		w = 40,
@@ -123,17 +125,20 @@ function SHDHUDRadar:init(parent)
 		layer = 2
 	})
 	self._range_label = range_label
-	local text_distance = self._radar_radius + 48
-	range_label:set_position(c_x + text_distance * math.cos(-45-90),c_y + text_distance * math.sin(-45-90))
+	local text_distance = self._radar_radius + 64
+	range_label:set_position(c_x + text_distance * math.cos(-60-90),c_y + text_distance * math.sin(-60-90))
 	
 	local range_blur = panel:bitmap({
 		name = "range_blur",
 		texture = "guis/textures/test_blur_df",
 		render_template = "VertexColorTexturedBlur3D",
+		--color = Color.red,
+		x = range_label:x(),
+		y = range_label:y(),
 		valign = "grow",
 		halign = "grow",
-		w = 0,
-		h = 0,
+		w = 36,
+		h = 20,
 		layer = 1
 	})
 	self._range_blur = range_blur
@@ -153,22 +158,24 @@ function SHDHUDRadar:init(parent)
 		layer = 2
 	})
 	self._angle_label = angle_label
-	angle_label:set_position(c_x + (text_distance * math.cos(-60-90)),c_y + (text_distance * math.sin(-60-90)))
+	angle_label:set_position(c_x + (text_distance * math.cos(-75-90)),c_y + (text_distance * math.sin(-75-90)))
 	
 	local angle_blur = panel:bitmap({
 		name = "angle_blur",
 		texture = "guis/textures/test_blur_df",
 		render_template = "VertexColorTexturedBlur3D",
+		--color = Color.blue,
+		x = angle_label:x() + 4,
+		y = angle_label:y(),
 		valign = "grow",
 		halign = "grow",
-		w = 0,
-		h = 0,
+		w = 38,
+		h = 20,
 		layer = 1
 	})
 	self._angle_blur = angle_blur
 	
 	self._radar_segments = {}
-	self._radar_state_cache = {}
 	
 	local ring_layers = {
 		[0] = "guis/textures/shdhud/radar_ring_0",
@@ -188,16 +195,21 @@ function SHDHUDRadar:init(parent)
 		42.5, -- west
 		42 -- northwest
 	}
+	self._radar_distances = {
+		250,
+		750,
+		1500,
+		2000
+	}
 	
 	-- intentionally skip point-blank
 	for i,ring_texture in ipairs(ring_layers) do 
 		self._radar_segments[i] = {}
-		self._radar_state_cache[i] = {}
 		local start_angle = -self._radar_angles[1] / 2
 		for j,angle in ipairs(self._radar_angles) do 
 			local new_segment = panel:bitmap({
 				name = string.format("radar_%i_%i",i,j),
-				texture = ring_layers[i],
+				texture = ring_texture,
 				render_template = "VertexColorTexturedRadial",
 				rotation = start_angle + 1,
 				valign = "grow",
@@ -232,7 +244,7 @@ function SHDHUDRadar:init(parent)
 	
 	self:set_north_angle(0)
 	self:set_vision_cone(70)
-	self:set_range_label(40)
+	self:set_range_label(self._radar_distances[#self._radar_distances]/100)
 end
 
 function SHDHUDRadar:set_north_angle(angle)
@@ -257,14 +269,14 @@ function SHDHUDRadar:set_vision_cone(angle)
 end
 
 function SHDHUDRadar:set_range_label(range)
-	self:_set_range_label(string.format("Ø%im",range))
+	self:_set_range_label(string.format("%im",range))
 end
 
 function SHDHUDRadar:_set_range_label(str)
 	self._range_label:set_text(str)
-	local x,y,w,h = self._range_label:text_rect()
-	self._range_blur:set_position(x-2,y-2)
-	self._range_blur:set_size(w+4,h+4)
+	--local x,y,w,h = self._range_label:text_rect()
+	--self._range_blur:set_position(x-(w/2)-2,y-2)
+	--self._range_blur:set_size(w+2,h+2)
 end
 
 function SHDHUDRadar:set_angle_label(angle)
@@ -273,14 +285,17 @@ end
 
 function SHDHUDRadar:_set_angle_label(str)
 	self._angle_label:set_text(str)
-	local x,y,w,h = self._angle_label:text_rect()
-	self._angle_blur:set_position(x-2,y-2)
-	self._angle_blur:set_size(w+4,h+4)
+	--local x,y,w,h = self._angle_label:text_rect()
+	--self._angle_blur:set_position(x-w-2,y-2)
+	--self._angle_blur:set_size(w+2,h+2)
 end
 
-function SHDHUDRadar:set_radar_segment(angle_tier,direction_tier,enabled)
-	local segments = self._radar_segments[angle_tier]
-	local segment_data = segments and segments[direction_tier]
+function SHDHUDRadar:set_radar_segment(distance_tier,angle_tier,enabled)
+	if distance_tier == 0 then
+		angle_tier = 1
+	end
+	local segments = self._radar_segments[distance_tier]
+	local segment_data = segments and segments[angle_tier]
 	if segment_data then
 		if segment_data.state ~= enabled then
 			segment_data.state = enabled

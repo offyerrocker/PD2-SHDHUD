@@ -79,7 +79,7 @@ end
 function HUDManager:update_radar(t,dt)
 	local player = managers.player:local_player()
 	
-	local blips = {}
+	local blips = {[0]={}}
 	
 	if alive(player) then
 		local shdhud_radar = self._shdhud_radar
@@ -88,13 +88,14 @@ function HUDManager:update_radar(t,dt)
 		local player_pos = movement_ext:m_pos()
 		local player_pos_flat = player_pos:with_z(0)
 		local aim_direction = movement_ext:m_head_rot():yaw()
-		shdhud_radar:set_north_angle(aim_direction % 360)
-		local h = 1500
-		local pos2 = player_pos + Vector3(0,h,0)
-		local radius = 2000
+		shdhud_radar:set_north_angle(-aim_direction % 360)
+		--local h = 1500
+		--local pos2 = player_pos + Vector3(0,h,0)
+		local radar_angles = shdhud_radar._radar_angles
+		local radar_distances = shdhud_radar._radar_distances
+		local radius = radar_distances[#radar_distances]
 --		local nearby_enemies = World:find_units_quick("cylinder", player_pos + Vector3(0,-h,0), pos2, radius, slotmask)
 		local nearby_enemies = World:find_units_quick("sphere", player_pos, radius, slotmask)
-		
 		for _,unit in pairs(nearby_enemies) do 
 			local contour_ext = unit:contour()
 			if contour_ext then
@@ -102,53 +103,43 @@ function HUDManager:update_radar(t,dt)
 			end
 			local unit_pos = unit:position()
 			local unit_pos_flat = unit_pos:with_z(0)
-			local distance = mvector3.distance(player_pos_flat,unit_pos_flat)
 			local t_angle = math.atan2(player_pos_flat.y - unit_pos_flat.y,player_pos_flat.x - unit_pos_flat.x)
 			local angle = (aim_direction - t_angle - 35) % 360
-			local distance_tier
+
+			local distance_tier = 4
+			local distance = mvector3.distance(player_pos_flat,unit_pos_flat)
 			if managers.groupai:state():whisper_mode() then
 				distance_tier = 4
-			elseif distance > 1500 then
-				distance_tier = 3
-			elseif distance > 1000 then
-				distance_tier = 2
-			elseif distance > 250 then
-				distance_tier = 1
 			else
-				distance_tier = 0
+				for i,distance_threshold in ipairs(radar_distances) do
+					if distance < distance_threshold then
+						distance_tier = i - 1
+						break
+					end
+				end
 			end
 			
-			local angle_tier 
-			if angle < 70 then
-				angle_tier = 1
-			elseif angle < 70 + 42 then
-				angle_tier = 2
-			elseif angle < 70 + 42 + 42.5 then
-				angle_tier = 3
-			elseif angle < 70 + 42 + 42.5 + 38 then
-				angle_tier = 4
-			elseif angle < 70 + 42 + 42.5 + 38 + 45 then
-				angle_tier = 5
-			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 then
-				angle_tier = 6
-			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 + 42.5 then
-				angle_tier = 7
-			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 + 42.5 + 42 then
-				angle_tier = 8
-			else
-				angle_tier = 1
+			local angle_tier = 1
+			if distance_tier > 0 then
+				local angle_threshold = 0
+				for i,n in ipairs(radar_angles) do
+					angle_threshold = angle_threshold + n
+					if angle < angle_threshold then
+						angle_tier = i
+						break
+					end
+				end
 			end
 			
-			blips[angle_tier] = blips[angle_tier] or {}
-			blips[angle_tier][distance_tier] = true
+			blips[distance_tier] = blips[distance_tier] or {}
+			blips[distance_tier][angle_tier] = true
 			
-			
-			
-			--Console:SetTracker(string.format("%1f %i",angle,angle_tier),1)
+			--Console:SetTracker(string.format("%i %1f %i %i",distance,angle,distance_tier,angle_tier),1)
 		end
-		for _angle_tier=1,8,1 do 
-			for _distance_tier=0,4 do
-				if blips[_angle_tier] and blips[_angle_tier][_distance_tier] then
+		shdhud_radar:set_radar_segment(0,1,blips[0][1] or false)
+		for _distance_tier=1,4,1 do
+			for _angle_tier=1,8,1 do 
+				if blips[_distance_tier] and blips[_distance_tier][_angle_tier] then
 					shdhud_radar:set_radar_segment(_distance_tier,_angle_tier,true)
 				else
 					shdhud_radar:set_radar_segment(_distance_tier,_angle_tier,false)
