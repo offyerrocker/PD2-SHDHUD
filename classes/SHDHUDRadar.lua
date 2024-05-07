@@ -1,3 +1,7 @@
+-- todo 
+-- point blips for friendlies and marked enemies
+-- reduce radar size
+
 local SHDHUDPanel = SHDHUDCore:require("classes/SHDHUDPanel")
 local SHDAnimLibrary = SHDHUDCore:require("classes/SHDHUDAnimations")
 local SHDHUDRadar = class(SHDHUDPanel)
