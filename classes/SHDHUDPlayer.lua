@@ -15,7 +15,7 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 	end
 	
 	local w = parent:w()
-	local h = 24 -- 15 --parent:h() / 3
+	local h = 15 -- 24 --parent:h() / 3
 	local panel = parent:panel({
 		name = name,
 		w = w,
@@ -30,7 +30,7 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 		color = text_color,
 		text = "00",
 		font = "fonts/borda_semibold",
-		font_size = 20,
+		font_size = 16, -- 20
 		kern = -20,
 		monospace = true,
 		align = "center",
@@ -790,8 +790,8 @@ function SHDHUDPlayer:create_weapons()
 	--backpack_weapon_label_1:set_y(2)
 	local backpack_weapon_label_2 = self.create_backpack_label(backpack_weapons_panel,"backpack_weapon_label_2")
 	backpack_weapon_label_2:set_y(backpack_weapon_label_1:bottom())
-	--local backpack_weapon_label_3 = self.create_backpack_label(backpack_weapons_panel,"backpack_weapon_label_3")
-	--backpack_weapon_label_3:set_y(backpack_weapon_label_2:bottom())
+	local backpack_weapon_label_3 = self.create_backpack_label(backpack_weapons_panel,"backpack_weapon_label_3")
+	backpack_weapon_label_3:set_y(backpack_weapon_label_2:bottom())
 	return weapons
 end
 
@@ -957,7 +957,7 @@ end
 function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
 	if self.data.equipped_weapon_index ~= id then
 		self.data.equipped_weapon_index = id
-		self:upd_ammo_amount(id)
+		--self:upd_ammo_amount(id)
 		self:upd_backpack_ammo(id)
 	end
 end
@@ -969,19 +969,21 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
 	
 	local MAX_DIGITS = 2
-	local i = 0
-	for selection_index,ammo_data in ipairs(self.data.weapons) do 
-		if selection_index ~= equipped_index then
-			i = i + 1
-			local backpack_slot = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",i))
-			if alive(backpack_slot) then
-				backpack_slot:show()
-				self.set_number_label(backpack_slot:child("label"),ammo_data.magazine_current or 0,MAX_DIGITS,{
+	local backpack_slot = 1
+	for selection_index = 1,table.size(self.data.weapons),1 do 
+		local ammo_data = self.data.weapons[selection_index]
+		if ammo_data and selection_index ~= equipped_index then
+			backpack_slot = backpack_slot + 1
+			local backpack_panel = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",backpack_slot))
+			if alive(backpack_panel) then
+				backpack_panel:show()
+				self.set_number_label(backpack_panel:child("label"),ammo_data.magazine_current or 0,MAX_DIGITS,{
 					color_full,
 					color_empty,
 					color_partial
 				})
-				break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
+				
+				--break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
 			else
 				break
 			end
@@ -989,6 +991,7 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	end
 end
 
+-- do not use
 function SHDHUDPlayer:upd_ammo_amount(selection_index)
 	local ammo_data = self.data.weapons[selection_index]
 	if ammo_data then
@@ -1007,20 +1010,22 @@ end
 function SHDHUDPlayer:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
 	local wpns_data = self.data.weapons[selection_index]
 	if wpns_data then
-		wpns_data.magazine_max = max_clip
-		wpns_data.magazine_current = current_clip
-		wpns_data.reserve_max = max_left
-		wpns_data.reserve_current = current_left
+		wpns_data.magazine_max = max_clip or wpns_data.magazine_max
+		wpns_data.magazine_current = current_clip or wpns_data.magazine_current
+		wpns_data.reserve_max = max_left or wpns_data.reserve_max
+		wpns_data.reserve_current = current_left or wpns_data.reserve_current
 	else
 		self.data.weapons[selection_index] = {
-			magazine_current = 0,
-			magazine_max = 0,
-			reserve_current = 0,
-			reserve_max = 0
+			magazine_current = current_clip or 0,
+			magazine_max = max_clip or 0,
+			reserve_current = current_left or 0,
+			reserve_max = max_left or 0
 		}
 	end
 	if selection_index == self.data.equipped_weapon_index then
-		self:upd_ammo_amount(selection_index)
+		self:set_magazine_amount(selection_index,current_clip,max_clip)
+		self:set_reserve_amount(selection_index,current_left,max_left)
+		--self:upd_ammo_amount(selection_index)
 	end
 end
 
