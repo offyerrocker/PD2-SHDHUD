@@ -15,7 +15,7 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 	end
 	
 	local w = parent:w()
-	local h = 15 -- 24 --parent:h() / 3
+	local h = 24 --parent:h() / 3
 	local panel = parent:panel({
 		name = name,
 		w = w,
@@ -969,6 +969,7 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	
 	local MAX_DIGITS = 2
 	local backpack_slot = 0
+	
 	local weapon_order = {}
 	-- collect keys
 	for i,_ in pairs(self.data.weapons) do 
@@ -990,10 +991,50 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 					color_partial
 				})
 				
-				--break -- temp; only show loaded mag values for primary/secondary weapons (selection index 1 or 2)
 			else
 				break
 			end
+		end
+	end
+end
+
+function SHDHUDPlayer:add_weapon(index,magazine_max,magazine_current,reserve_current,reserve_max,...)
+	SHDHUDPlayer.super.add_weapon(self,index,magazine_max,magazine_current,reserve_current,reserve_max,...)
+	local num_weapons = table.size(self.data.weapons)
+	local backpack_weapons = self._weapons_panel:child("backpack_weapons_panel")
+	
+	local font_sizes = {
+		[1] = 26,
+		[2] = 26,
+		[3] = 22,
+		[4] = 15
+	}
+	local font_size = font_sizes[num_weapons] or 15
+	
+	local panel_heights = {
+		[1] = 50,
+		[2] = 50,
+		[3] = 20,
+		[4] = 15
+	}
+	local panel_h = panel_heights[num_weapons]
+	
+	local total_h = panel_h * num_weapons
+	local max_h = backpack_weapons:h()
+	local offset_y = 2 -- + (max_h - total_h) / 2
+	
+	local prev_panel
+	for backpack_slot=1,num_weapons do 
+		local backpack_panel = backpack_weapons:child(string.format("backpack_weapon_label_%i",backpack_slot))
+		if alive(backpack_panel) then
+			backpack_panel:child("label"):set_font_size(font_size)
+			backpack_panel:set_h(panel_h)
+			if alive(prev_panel) then
+				backpack_panel:set_y(prev_panel:bottom())
+			else
+				backpack_panel:set_y(offset_y)
+			end
+			prev_panel = backpack_panel
 		end
 	end
 end
