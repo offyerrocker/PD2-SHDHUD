@@ -1,31 +1,14 @@
 local SHDHUDPlayer = SHDHUDCore:require("classes/SHDHUDPlayer")
 local SHDHUDCriminalBase = SHDHUDCore:require("classes/SHDHUDCriminalBase")
 local SHDHUDRadar = SHDHUDCore:require("classes/SHDHUDRadar")
+local SHDHUDObjectives = SHDHUDCore:require("classes/SHDHUDObjectives")
 
-Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_setupplayerhud",function(self,hud)
+Hooks:PreHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_setupplayerhud",function(self,hud)
 	local new_ws = managers.gui_data:create_fullscreen_workspace("shdhud")
 	local master_panel = new_ws:panel()
 	
 	SHDHUDCore._testws = new_ws
 	SHDHUDCore._panel = master_panel
-	self._shdhud_teammates = {}
-	local MAX_PLAYERS = _G.BigLobbyGlobals and _G.BigLobbyGlobals.num_players_settings or 4
-	for i=1,MAX_PLAYERS,1 do 
-		local hud
-		if i == HUDManager.PLAYER_PANEL then
-			hud = SHDHUDPlayer:new(master_panel,i)
-			self._shdhud_player = hud
-		else
-			hud = SHDHUDCriminalBase:new(master_panel,i)
-		end
-		self._shdhud_teammates[i] = hud
-	end
-	fooshd = self._shdhud_player
-	
-	local radar = SHDHUDRadar:new(master_panel)
-	self._shdhud_radar = radar
-	
-	self:add_updator("shdhud_update",callback(self,self,"update_radar"))
 end)
 
 function HUDManager:shdhud_on_mission_loud()
@@ -66,6 +49,51 @@ function HUDManager:show_player_gear(panel_id)
 	--self._shdhud_player:show()
 end
 
+
+
+
+
+
+
+------------------------------------------------
+--************* OBJECTIVES PANEL *************--
+------------------------------------------------
+Hooks:PostHook(HUDManager,"_create_objectives","shdhud_hudmanager_createobjectives",function(self,hud)
+	hud = hud or managers.hud:script(PlayerBase.PLAYER_INFO_HUD_PD2)
+	
+	local master_panel = SHDHUDCore._panel
+	local radar = SHDHUDRadar:new(master_panel)
+	self._shdhud_radar = radar
+	
+	local objectives = SHDHUDObjectives:new(master_panel)
+	self._hud_objectives = objectives
+	objectives:panel():set_x(radar:panel():right())
+	
+	self:add_updator("shdhud_update",callback(self,self,"update_radar"))
+end)
+
+function HUDManager:activate_objective(data)
+	self._hud_objectives:activate_objective(data)
+end
+
+function HUDManager:complete_sub_objective(data)
+	if Console then
+		Print("Complete sub objective:")
+		logall(data)
+	end
+end
+
+function HUDManager:update_amount_objective(data)
+	self._hud_objectives:update_amount_objective(data)
+end
+
+function HUDManager:remind_objective(id)
+	self._hud_objectives:remind_objective(id)
+end
+
+function HUDManager:complete_objective(data)
+	self._hud_objectives:complete_objective(data)
+end
 
 
 
@@ -158,6 +186,23 @@ end
 --*************** PLAYER PANEL ***************--
 ------------------------------------------------
 
+Hooks:PostHook(HUDManager,"_create_teammates_panel","shdhud_hudmanager_createteammatespanel",function(self,hud)
+	local master_panel = SHDHUDCore._panel
+	
+	self._shdhud_teammates = {}
+	local MAX_PLAYERS = _G.BigLobbyGlobals and _G.BigLobbyGlobals.num_players_settings or 4
+	for i=1,MAX_PLAYERS,1 do 
+		local hud
+		if i == HUDManager.PLAYER_PANEL then
+			hud = SHDHUDPlayer:new(master_panel,i)
+			self._shdhud_player = hud
+		else
+			hud = SHDHUDCriminalBase:new(master_panel,i)
+		end
+		self._shdhud_teammates[i] = hud
+	end
+	fooshd = self._shdhud_player
+end)
 
 	-- Vitals
 function HUDManager:set_player_armor(data)
