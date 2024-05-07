@@ -1,8 +1,8 @@
 local SHDHUDPanel = class()
 
 function SHDHUDPanel:init(parent,params)
---[[
 	self._parent = parent
+--[[
 	local panel = parent:get_panel():panel({
 		name = params.name
 	})

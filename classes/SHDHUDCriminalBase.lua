@@ -2,7 +2,7 @@ local SHDHUDPanel = SHDHUDCore:require("classes/SHDHUDPanel")
 local SHDHUDCriminalBase = class(SHDHUDPanel)
 
 function SHDHUDCriminalBase:init(master_panel,index,...)
-	SHDHUDCriminalBase.super.init(self,master_panel,index,...)
+	SHDHUDCriminalBase.super.init(self,master_panel,...)
 	self._id = index
 	self._alt_ammo = managers.user:get_setting("alt_hud_ammo")
 	
