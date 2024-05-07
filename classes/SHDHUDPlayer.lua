@@ -35,6 +35,8 @@ function SHDHUDPlayer.create_backpack_label(parent,name)
 		monospace = true,
 		align = "center",
 		vertical = "center",
+		valign = "grow", -- doesn't change the font size but does properly scale the bounding box for the text (for align and vertical)
+		halign = "grow",
 		layer = 2
 	})
 	
@@ -67,7 +69,8 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		w = w,
 		h = h,
 		valign = "grow",
-		halign = "grow"
+		halign = "grow",
+		visible = false
 	})
 	
 	local bg = panel:rect({
@@ -105,6 +108,8 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		monospace = true,
 		align = "left",
 		vertical = "center", --"top"
+		valign = "grow",
+		halign = "grow",
 		visible = false,
 		layer = 2
 	})
@@ -120,6 +125,8 @@ function SHDHUDPlayer.create_deployable_box(parent,name)
 		monospace = true,
 		align = "left",
 		vertical = "bottom",
+		valign = "grow",
+		halign = "grow",
 		layer = 2,
 		visible = false
 	})
@@ -144,7 +151,7 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 		h = h,
 		valign = "grow",
 		halign = "grow",
-		false
+		visible = false
 	})
 	
 	local bg = panel:rect({
@@ -181,6 +188,8 @@ function SHDHUDPlayer.create_loadout_equipment_box(parent,name)
 		monospace = true,
 		align = "left",
 		vertical = "center",
+		valign = "grow",
+		halign = "grow",
 		layer = 2
 	})
 	
@@ -744,8 +753,9 @@ function SHDHUDPlayer:create_weapons()
 		kern = -18,
 		monospace = true,
 		align = "center",
---		align = "center",
 --		vertical = "center",
+		valign = "grow",
+		halign = "grow",
 		font = "fonts/borda_semibold",
 		font_size = 32,
 		layer = 1
@@ -761,8 +771,8 @@ function SHDHUDPlayer:create_weapons()
 		monospace = true,
 		align = "center",
 		vertical = "top",
---		align = "center",
---		vertical = "center",
+		valign = "grow",
+		halign = "grow",
 		layer = 1
 	})
 	
@@ -770,9 +780,9 @@ function SHDHUDPlayer:create_weapons()
 	local backpack_weapons_panel = weapons:panel({
 		name = "backpack_weapons_panel",
 		x = equipped_weapon_panel:right(),
-		y = 0,
+		y = weapons_divider_top:bottom(),
 		w = weapons:w() - equipped_weapon_panel:w(),
-		h = 50
+		h = weapons:h()
 	})
 	local backpack_weapons_panel_blur = backpack_weapons_panel:bitmap({
 		name = "backpack_weapons_panel_blur",
@@ -967,7 +977,6 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	local color_empty = SHDHUDCore:get_color("player_hud_loadout_empty_1")
 	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
 	
-	local MAX_DIGITS = 2
 	local backpack_slot = 0
 	
 	local weapon_order = {}
@@ -985,7 +994,8 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 			local backpack_panel = self._weapons_panel:child("backpack_weapons_panel"):child(string.format("backpack_weapon_label_%i",backpack_slot))
 			if alive(backpack_panel) then
 				backpack_panel:show()
-				self.set_number_label(backpack_panel:child("label"),ammo_data.magazine_current or 0,MAX_DIGITS,{
+				local num_digits = SHDHUDCore.get_num_decimal_places(ammo_data.magazine_max)
+				self.set_number_label(backpack_panel:child("label"),ammo_data.magazine_current or 0,num_digits,{
 					color_full,
 					color_empty,
 					color_partial
@@ -1011,22 +1021,22 @@ function SHDHUDPlayer:add_weapon(index,magazine_max,magazine_current,reserve_cur
 	local font_size = font_sizes[num_weapons] or 15
 	
 	local panel_heights = {
-		[1] = 50,
-		[2] = 50,
-		[3] = 20,
+		[1] = 46,
+		[2] = 46,
+		[3] = 22,
 		[4] = 15
 	}
 	local panel_h = panel_heights[num_weapons]
-	
-	local total_h = panel_h * num_weapons
-	local max_h = backpack_weapons:h()
-	local offset_y = 2 -- + (max_h - total_h) / 2
+	--local total_h = panel_h * num_weapons
+	--local max_h = backpack_weapons:h()
+	local offset_y = 0 -- + (max_h - total_h) / 2
 	
 	local prev_panel
 	for backpack_slot=1,num_weapons do 
 		local backpack_panel = backpack_weapons:child(string.format("backpack_weapon_label_%i",backpack_slot))
 		if alive(backpack_panel) then
-			backpack_panel:child("label"):set_font_size(font_size)
+			local label = backpack_panel:child("label")
+			label:set_font_size(font_size)
 			backpack_panel:set_h(panel_h)
 			if alive(prev_panel) then
 				backpack_panel:set_y(prev_panel:bottom())
@@ -1079,12 +1089,12 @@ function SHDHUDPlayer:_set_magazine_amount(slot,current,total)
 	local weapons = self._weapons_panel
 	local equipped_weapon_panel = weapons:child("equipped_weapon_panel")
 	local mag_label = equipped_weapon_panel:child("mag_label")
-	local NUM_DIGITS = 2
 	
 	local full_color = SHDHUDCore:get_color("player_hud_ammo_magazine_full")
 	local partial_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_2")
 	local empty_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_1")
-	self.set_number_label(mag_label,current,NUM_DIGITS,{full_color,empty_color,partial_color})
+	local num_digits = SHDHUDCore.get_num_decimal_places(total)
+	self.set_number_label(mag_label,current,num_digits,{full_color,empty_color,partial_color})
 end
 
 function SHDHUDPlayer:set_reserve_amount(slot,current,total)
@@ -1095,20 +1105,21 @@ function SHDHUDPlayer:_set_reserve_amount(slot,current,total)
 	local weapons = self._weapons_panel
 	local equipped_weapon_panel = weapons:child("equipped_weapon_panel")
 	local reserve_label = equipped_weapon_panel:child("reserve_label")
-	local NUM_DIGITS = 3
+	local num_digits = SHDHUDCore.get_num_decimal_places(total)
 	
 	local full_color = SHDHUDCore:get_color("player_hud_ammo_reserve_full")
 	local empty_color = SHDHUDCore:get_color("player_hud_ammo_reserve_empty_1")
-	self.set_number_label(reserve_label,current,NUM_DIGITS,{full_color,empty_color})
+	self.set_number_label(reserve_label,current,num_digits,{full_color,empty_color})
 end
 
+-- generally not used
 function SHDHUDPlayer:set_backpack_amount(slot,current,total)
 	local weapons = self._weapons_panel
 	local backpack_weapons_panel = weapons:child("backpack_weapons_panel")
 	local reserve = backpack_weapons_panel:child(string.format("backpack_weapon_label_%i",slot))
-	local NUM_DIGITS = 2
 	if alive(reserve) then
-		self.set_number_label(reserve:child("label"),current,NUM_DIGITS,nil)
+		local num_digits = SHDHUDCore.get_num_decimal_places(total)
+		self.set_number_label(reserve:child("label"),current,num_digits,nil)
 	end
 end
 
@@ -1520,6 +1531,7 @@ function SHDHUDPlayer:set_grenades(data)
 		32
 	})
 	
+	throwables:show()
 	throwables:child("icon"):set_image(texture,unpack(texture_rect))
 	
 	self:set_grenades_amount(data)

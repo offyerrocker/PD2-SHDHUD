@@ -97,7 +97,7 @@ function SHDHUDPanel.set_number_label(textgui,amount,num_digits,custom_colors)
 	
 	local main_color,range_end
 	if amount > 0 then
-		range_end = num_digits - (1 + math.floor(0.01 + math.log(amount,10))) -- i love floating point precision errors
+		range_end = num_digits - SHDHUDCore.get_num_decimal_places(amount) -- i love floating point precision errors
 		main_color = full_color
 	else
 		if partial_color then

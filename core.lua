@@ -203,6 +203,10 @@ function SHDHUDCore:get_color(id)
 	return id and self._colors[id] or Color.white
 end
 
+function SHDHUDCore.get_num_decimal_places(n)
+	return 1 + math.floor(0.01 + math.log(n,10))
+end
+
 -- I/O
 
 function SHDHUDCore:load_settings()
