@@ -969,7 +969,7 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	local color_partial = SHDHUDCore:get_color("player_hud_loadout_empty_2")
 	
 	local MAX_DIGITS = 2
-	local backpack_slot = 1
+	local backpack_slot = 0
 	for selection_index = 1,table.size(self.data.weapons),1 do 
 		local ammo_data = self.data.weapons[selection_index]
 		if ammo_data and selection_index ~= equipped_index then
