@@ -93,25 +93,21 @@ end
 -- set visual ammo counter display for equipped weapons
 -- called when ammo count is changed, or underbarrel is toggled
 function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, current_left, max_left)
-	Print("HUDManager:set_ammo_amount A",selection_index, max_clip, current_clip, current_left, max_left)
-
-	--Print("HUDManager:set_ammo_amount B selection_index <= 2:",selection_index)
-	-- specifically when switching to a weapon whose underbarrel is active,
+	-- specifically when switching to/from a weapon whose underbarrel is active,
 	-- the game will erroneously state that the selected index is the BASE WEAPON,
 	-- and not the UNDERBARREL WEAPON.
-	-- in all other cases, the game seems to correctly pass the selected index (1,2,3,4).
+	-- in most other cases, the game seems to correctly pass the selected index (1,2,3,4).
 	-- unfortunately, that one failure means we need to re-check the game's work every time!
 	
 	local player = managers.player:local_player()
 	if alive(player) then
-		local selection_index_mod = 1 + (selection_index - 1) % 2
 		local inventory = player:inventory()
-		--local selection = inventory and inventory:available_selections()[selection_index]
 		if inventory then
-			local unit = inventory:unit_by_selection(selection_index) -- selection and selection.unit
-			local is_equipped = inventory:is_equipped(selection_index_mod)
-			if is_equipped then
-				Print("HUDManager:set_ammo_amount, equipped true")
+			local selection_index_base = 1 + (selection_index - 1) % 2 -- selection index of the given base weapon
+			local is_equipped = inventory:is_equipped(selection_index_base)
+			
+			if selection_index_base == selection_index then -- game could be lying about not using underbarrel
+				local unit = inventory:unit_by_selection(selection_index_base)
 				local weapon_base = alive(unit) and unit:base()
 				if weapon_base then
 					local underbarrel_base = weapon_base:gadget_overrides_weapon_functions()
@@ -122,97 +118,35 @@ function HUDManager:set_ammo_amount(selection_index, max_clip, current_clip, cur
 						-- if the parent weapon for the underbarrel is currently equipped,
 						-- tell shdhud that the underbarrel is the actually equipped weapon
 						if underbarrel_index then
-							Print("HUDManager:set_ammo_amount C underbarrel_index:",underbarrel_index,"current:",inventory:equipped_selection())
-							selection_index = underbarrel_index
-							--self._shdhud_player:set_weapon_selected(underbarrel_index)
 							
-							-- if selection_index == inventory:equipped_selection() then -- self._shdhud_player.data.equipped_weapon_index then --
-							-- 	self._shdhud_player:set_weapon_selected(selection_index)
-							-- end
-						else
-							Print("HUDManager:set_ammo_amount D underbarrel not active",selection_index,"current:",inventory:equipped_selection())
+							selection_index = underbarrel_index
+							
+							if not is_equipped then
+							--[[
+								max_clip = underbarrel_base:get_ammo_max_per_clip()
+								current_clip = underbarrel_base:get_ammo_remaining_in_clip()
+								current_left = underbarrel_base:get_ammo_total()
+								max_left = underbarrel_base:get_ammo_max()
+							--]]
+							end
 						end
 					end
 				end
-				--[[
-				if new_index then
-					Print("HUDManager:set_ammo_amount E set index",new_index)
-					self._shdhud_player:set_weapon_selected(new_index)
-				elseif is_equipped then
-					Print("HUDManager:set_ammo_amount F set index",selection_index)
-				end
-				--]]
-				Print("HUDManager:set_ammo_amount E set index",selection_index)
+			end
+			
+			if is_equipped then
 				self._shdhud_player:set_weapon_selected(selection_index)
 			end
 		end
 	end
+	
 	self._shdhud_player:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
 	
-		--[[
-		if selection_index == inventory:equipped_selection() then
-			self._shdhud_player:set_magazine_amount(selection_index,current_clip,max_clip)
-			self._shdhud_player:set_reserve_amount(selection_index,current_left,max_left)
-		end
-		--]]
-	--[[
-	if underbarrel_base then
-		-- update with true underbarrel ammo counts
-		
-		
-		
-		-- if different, 
-		-- set new equipped index
---		if selection_index ~= self._shdhud_player.data.equipped_weapon_index then -- check index against cached;
---			self._shdhud_player:upd_backpack_ammo(index)
---		end
-		
-		-- max_clip = underbarrel_base:get_ammo_max_per_clip()
-		-- current_clip = underbarrel_base:get_ammo_remaining_in_clip()
-		-- current_left = underbarrel_base:get_ammo_total()
-		-- max_left = underbarrel_base:get_ammo_max()
-	else
-		-- update with given counts
-	end
-	--]]
-	
-	
-	
-	--local actual_selection_index,actual_selected_base = self:shdhud_chk_selected_weapon(selection_index)
-	
 	managers.player:update_synced_ammo_info_to_peers(selection_index, max_clip, current_clip, current_left, max_left)
-	--self._shdhud_player:upd_backpack_ammo(selection_index)
-	
 end
---[[
-function HUDManager:shdhud_chk_selected_weapon(guess_index)
-	local player = managers.player:local_player()
-	if alive(player) then
-		local inventory = player:inventory()
-		local unit = inventory and inventory:unit_by_selection(id)
-		if unit then
-			local weapon_base = unit:base()
-			if not weapon_base then
-				local underbarrel = weapon_base:gadget_overrides_weapon_functions()
-				if underbarrel then
-					local td = underbarrel._tweak_data
-					local use_data = td and td.use_data
-					local selection_index = use_data and use_data.selection_index
-					if selection_index then
-						self._shdhud_player:set_weapon_selected(selection_index)
-						return
-					end
-				end
-			end
-		end
-	end
-end
---]]
 
 -- init cache ammo values
 function HUDManager:_set_weapon(data)
-	Print("_set_weapon",data.selection_index,"equipped",data.is_equip)
-	
 	local unit = data.unit
 	local weapon_base = alive(unit) and unit:base()
 	if weapon_base and weapon_base.ammo_info then
@@ -366,7 +300,6 @@ end
 
 -- prompt chk backpack reserve values
 function HUDManager:_set_teammate_weapon_selected(i,id,icon)
-	Print("_set_weapon_selected",i,id,icon)
 	if i == HUDManager.PLAYER_PANEL then
 		local player = managers.player:local_player()
 		if alive(player) then

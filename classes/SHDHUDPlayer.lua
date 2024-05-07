@@ -957,7 +957,6 @@ end
 function SHDHUDPlayer:set_weapon_selected(id,hud_icon)
 	if self.data.equipped_weapon_index ~= id then
 		self.data.equipped_weapon_index = id
-		--self:upd_ammo_amount(id)
 		self:upd_backpack_ammo(id)
 	end
 end
@@ -991,22 +990,6 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	end
 end
 
--- do not use
-function SHDHUDPlayer:upd_ammo_amount(selection_index)
-	local ammo_data = self.data.weapons[selection_index]
-	if ammo_data then
-		local magazine_current = ammo_data.magazine_current
-		local magazine_max = ammo_data.magazine_max
-		local reserve_current = ammo_data.reserve_current
-		local reserve_max = ammo_data.reserve_max
-		if self._alt_ammo then
-			reserve_current = math.max(0, reserve_current - magazine_max - (magazine_current - magazine_max))
-		end
-		self:set_magazine_amount(selection_index,magazine_current,magazine_max)
-		self:set_reserve_amount(selection_index,reserve_current,reserve_max)
-	end
-end
-
 function SHDHUDPlayer:set_ammo_amount(selection_index,max_clip,current_clip,current_left,max_left)
 	local wpns_data = self.data.weapons[selection_index]
 	if wpns_data then
@@ -1023,9 +1006,17 @@ function SHDHUDPlayer:set_ammo_amount(selection_index,max_clip,current_clip,curr
 		}
 	end
 	if selection_index == self.data.equipped_weapon_index then
-		self:set_magazine_amount(selection_index,current_clip,max_clip)
-		self:set_reserve_amount(selection_index,current_left,max_left)
-		--self:upd_ammo_amount(selection_index)
+		local magazine_max = wpns_data.magazine_max
+		local magazine_current = wpns_data.magazine_current
+		local reserve_max = wpns_data.reserve_max
+		local reserve_current = wpns_data.reserve_current
+		
+		self:set_magazine_amount(selection_index,magazine_current,magazine_max)
+		
+		if self._alt_ammo then
+			reserve_current = math.max(0, reserve_current - magazine_max - (magazine_current - magazine_max))
+		end
+		self:set_reserve_amount(selection_index,reserve_current,reserve_max)
 	end
 end
 
