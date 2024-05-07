@@ -18,7 +18,7 @@ function SHDHUDRadar:init(parent)
 	
 	local panel = parent:panel({
 		name = "radar",
-		x = 24,
+		x = 8,
 		y = 0,
 		w = 240,
 		h = 240
@@ -65,6 +65,8 @@ function SHDHUDRadar:init(parent)
 			1*16,0*16,
 			16,16
 		},
+		valign = "grow",
+		halign = "grow",
 		color = compass_color,
 		alpha = compass_alpha,
 		layer = 5
@@ -94,6 +96,8 @@ function SHDHUDRadar:init(parent)
 			1*16,1*16,
 			16,16
 		},
+		valign = "grow",
+		halign = "grow",
 		color = compass_color,
 		alpha = 1,
 		layer = 5
