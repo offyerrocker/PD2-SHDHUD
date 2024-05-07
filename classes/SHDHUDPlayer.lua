@@ -1093,7 +1093,7 @@ function SHDHUDPlayer:_set_magazine_amount(slot,current,total)
 	local full_color = SHDHUDCore:get_color("player_hud_ammo_magazine_full")
 	local partial_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_2")
 	local empty_color = SHDHUDCore:get_color("player_hud_ammo_magazine_empty_1")
-	local num_digits = SHDHUDCore.get_num_decimal_places(total)
+	local num_digits = math.min(SHDHUDCore.get_num_decimal_places(total),3)
 	self.set_number_label(mag_label,current,num_digits,{full_color,empty_color,partial_color})
 end
 
