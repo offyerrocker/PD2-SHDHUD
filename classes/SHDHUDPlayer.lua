@@ -969,7 +969,15 @@ function SHDHUDPlayer:upd_backpack_ammo(equipped_index)
 	
 	local MAX_DIGITS = 2
 	local backpack_slot = 0
-	for selection_index = 1,table.size(self.data.weapons),1 do 
+	local weapon_order = {}
+	-- collect keys
+	for i,_ in pairs(self.data.weapons) do 
+		table.insert(weapon_order,i)
+	end
+	-- sort keys
+	table.sort(weapon_order)
+	
+	for _,selection_index in ipairs(weapon_order) do 
 		local ammo_data = self.data.weapons[selection_index]
 		if ammo_data and selection_index ~= equipped_index then
 			backpack_slot = backpack_slot + 1
