@@ -59,8 +59,6 @@ end
 --************* OBJECTIVES PANEL *************--
 ------------------------------------------------
 Hooks:PostHook(HUDManager,"_create_objectives","shdhud_hudmanager_createobjectives",function(self,hud)
-	hud = hud or managers.hud:script(PlayerBase.PLAYER_INFO_HUD_PD2)
-	
 	local master_panel = SHDHUDCore._panel
 	local radar = SHDHUDRadar:new(master_panel)
 	self._shdhud_radar = radar
@@ -72,15 +70,16 @@ Hooks:PostHook(HUDManager,"_create_objectives","shdhud_hudmanager_createobjectiv
 	self:add_updator("shdhud_update",callback(self,self,"update_radar"))
 end)
 
-function HUDManager:activate_objective(data)
-	self._hud_objectives:activate_objective(data)
-end
 
 function HUDManager:complete_sub_objective(data)
 	if Console then
 		Print("Complete sub objective:")
 		logall(data)
 	end
+end
+--[[
+function HUDManager:activate_objective(data)
+	self._hud_objectives:activate_objective(data)
 end
 
 function HUDManager:update_amount_objective(data)
@@ -94,7 +93,7 @@ end
 function HUDManager:complete_objective(data)
 	self._hud_objectives:complete_objective(data)
 end
-
+--]]
 
 
 
