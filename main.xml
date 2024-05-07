@@ -12,5 +12,17 @@
 		<texture path="fonts/borda_regular" />
 		<font path="fonts/borda_demibold" load="true" unload="false" />
 		<texture path="fonts/borda_demibold" />
+		
+		<texture path="guis/textures/shdhud/radar_bg" />
+		<texture path="guis/textures/shdhud/radar_blur" />
+		<texture path="guis/textures/shdhud/radar_atlas" />
+		<texture path="guis/textures/shdhud/radar_ring_0" />
+		<texture path="guis/textures/shdhud/radar_ring_1" />
+		<texture path="guis/textures/shdhud/radar_ring_2" />
+		<texture path="guis/textures/shdhud/radar_ring_3" />
+		<texture path="guis/textures/shdhud/radar_ring_4" />
+		<texture path="guis/textures/shdhud/radar_vision_cone" />
+		
+		
 	</AddFiles>
 </mod>

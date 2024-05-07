@@ -1,5 +1,6 @@
 local SHDHUDPlayer = SHDHUDCore:require("classes/SHDHUDPlayer")
 local SHDHUDCriminalBase = SHDHUDCore:require("classes/SHDHUDCriminalBase")
+local SHDHUDRadar = SHDHUDCore:require("classes/SHDHUDRadar")
 
 Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_setupplayerhud",function(self,hud)
 	local new_ws = managers.gui_data:create_fullscreen_workspace("shdhud")
@@ -21,6 +22,10 @@ Hooks:PostHook(HUDManager,"_setup_player_info_hud_pd2","kshdhud_hudmanagerpd2_se
 	end
 	fooshd = self._shdhud_player
 	
+	local radar = SHDHUDRadar:new(master_panel)
+	self._shdhud_radar = radar
+	
+	self:add_updator("shdhud_update",callback(self,self,"update_radar"))
 end)
 
 function HUDManager:shdhud_on_mission_loud()
@@ -60,6 +65,103 @@ function HUDManager:show_player_gear(panel_id)
 	--]]
 	--self._shdhud_player:show()
 end
+
+
+
+
+
+
+
+------------------------------------------------
+--*************** RADAR PANEL ***************--
+------------------------------------------------
+
+function HUDManager:update_radar(t,dt)
+	local player = managers.player:local_player()
+	
+	local blips = {}
+	
+	if alive(player) then
+		local shdhud_radar = self._shdhud_radar
+		local slotmask = managers.slot:get_mask("enemies")
+		local movement_ext = player:movement()
+		local player_pos = movement_ext:m_pos()
+		local player_pos_flat = player_pos:with_z(0)
+		local aim_direction = movement_ext:m_head_rot():yaw()
+		shdhud_radar:set_north_angle(aim_direction % 360)
+		local h = 1500
+		local pos2 = player_pos + Vector3(0,h,0)
+		local radius = 2000
+--		local nearby_enemies = World:find_units_quick("cylinder", player_pos + Vector3(0,-h,0), pos2, radius, slotmask)
+		local nearby_enemies = World:find_units_quick("sphere", player_pos, radius, slotmask)
+		
+		for _,unit in pairs(nearby_enemies) do 
+			local contour_ext = unit:contour()
+			if contour_ext then
+				-- is marked
+			end
+			local unit_pos = unit:position()
+			local unit_pos_flat = unit_pos:with_z(0)
+			local distance = mvector3.distance(player_pos_flat,unit_pos_flat)
+			local t_angle = math.atan2(player_pos_flat.y - unit_pos_flat.y,player_pos_flat.x - unit_pos_flat.x)
+			local angle = (aim_direction - t_angle - 35) % 360
+			local distance_tier
+			if managers.groupai:state():whisper_mode() then
+				distance_tier = 4
+			elseif distance > 1500 then
+				distance_tier = 3
+			elseif distance > 1000 then
+				distance_tier = 2
+			elseif distance > 250 then
+				distance_tier = 1
+			else
+				distance_tier = 0
+			end
+			
+			local angle_tier 
+			if angle < 70 then
+				angle_tier = 1
+			elseif angle < 70 + 42 then
+				angle_tier = 2
+			elseif angle < 70 + 42 + 42.5 then
+				angle_tier = 3
+			elseif angle < 70 + 42 + 42.5 + 38 then
+				angle_tier = 4
+			elseif angle < 70 + 42 + 42.5 + 38 + 45 then
+				angle_tier = 5
+			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 then
+				angle_tier = 6
+			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 + 42.5 then
+				angle_tier = 7
+			elseif angle < 70 + 42 + 42.5 + 38 + 45 + 38 + 42.5 + 42 then
+				angle_tier = 8
+			else
+				angle_tier = 1
+			end
+			
+			blips[angle_tier] = blips[angle_tier] or {}
+			blips[angle_tier][distance_tier] = true
+			
+			
+			
+			--Console:SetTracker(string.format("%1f %i",angle,angle_tier),1)
+		end
+		for _angle_tier=1,8,1 do 
+			for _distance_tier=0,4 do
+				if blips[_angle_tier] and blips[_angle_tier][_distance_tier] then
+					shdhud_radar:set_radar_segment(_distance_tier,_angle_tier,true)
+				else
+					shdhud_radar:set_radar_segment(_distance_tier,_angle_tier,false)
+				end
+			end
+		end
+	end
+end
+
+
+
+
+
 
 ------------------------------------------------
 --*************** PLAYER PANEL ***************--
@@ -392,6 +494,8 @@ function HUDManager:shdhud_set_deployable_equipment(i,data)
 	self._shdhud_teammates[i]:set_deployable_amount(data)
 end
 
+-- the data (namely, the deployable index) provided by this function is unreliable
+-- so instead it is simply an event that prompts checking the actual values
 function HUDManager:set_deployable_equipment(i, data)
 	if i == HUDManager.PLAYER_PANEL then
 		self:shdhud_upd_deployable_equipments()
@@ -483,12 +587,6 @@ end)
 
 
 do return end
-
-
-function HUDManager:set_weapon_selected_by_inventory_index(inventory_index)
-	--Print("Inventory index",inventory_index)
-end
-
 
 
 --custom
