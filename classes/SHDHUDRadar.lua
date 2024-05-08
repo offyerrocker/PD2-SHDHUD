@@ -262,11 +262,13 @@ function SHDHUDRadar:set_north_angle(angle)
 	
 	local c_x,c_y = self._panel:center()
 	
-	self._north_arrow:set_rotation(angle)
-	local _angle = angle - 90
-	self._north_arrow:set_center(c_x + arrow_distance * math.cos(_angle),c_y + arrow_distance * math.sin(_angle))
+	local compass_angle = angle
+	self._north_arrow:set_rotation(90 + angle)
+	local cos_ang = math.cos(angle)
+	local sin_ang = math.sin(angle)
+	self._north_arrow:set_center(c_x + arrow_distance * cos_ang,c_y + arrow_distance * sin_ang)
 	
-	self._north_label:set_center(c_x + text_distance * math.cos(_angle),c_y + text_distance * math.sin(_angle))
+	self._north_label:set_center(c_x + text_distance * cos_ang,c_y + text_distance * sin_ang)
 	
 	self:set_angle_label(angle)
 end

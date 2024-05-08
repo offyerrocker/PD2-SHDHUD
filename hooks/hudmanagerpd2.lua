@@ -115,7 +115,7 @@ function HUDManager:update_radar(t,dt)
 		local player_pos = movement_ext:m_pos()
 		local player_pos_flat = player_pos:with_z(0)
 		local aim_direction = movement_ext:m_head_rot():yaw()
-		shdhud_radar:set_north_angle(-aim_direction % 360)
+		shdhud_radar:set_north_angle((aim_direction - 90) % 360)
 		--local h = 1500
 		--local pos2 = player_pos + Vector3(0,h,0)
 		local radar_angles = shdhud_radar._radar_angles
