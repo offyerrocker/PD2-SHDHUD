@@ -257,20 +257,20 @@ end
 
 function SHDHUDRadar:set_north_angle(angle)
 	local radius = self._radar_radius
-	local text_distance = radius + 16
-	local arrow_distance = radius + 4
+	local text_distance = radius + 12
+	local arrow_distance = radius - 2
 	
 	local c_x,c_y = self._panel:center()
 	
-	local compass_angle = angle
-	self._north_arrow:set_rotation(90 + angle)
+	self._north_arrow:set_rotation(angle)
+	self:set_angle_label(angle)
+	
 	local cos_ang = math.cos(angle)
 	local sin_ang = math.sin(angle)
 	self._north_arrow:set_center(c_x + arrow_distance * cos_ang,c_y + arrow_distance * sin_ang)
 	
 	self._north_label:set_center(c_x + text_distance * cos_ang,c_y + text_distance * sin_ang)
 	
-	self:set_angle_label(angle)
 end
 
 function SHDHUDRadar:set_vision_cone(angle)
