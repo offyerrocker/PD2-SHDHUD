@@ -1,6 +1,7 @@
 local SHDHUDCriminalBase = SHDHUDCore:require("classes/SHDHUDCriminalBase")
 local SHDAnimLibrary = SHDHUDCore:require("classes/SHDHUDAnimations")
 local SHDHUDPlayer = class(SHDHUDCriminalBase)
+local SHDHUDBuffData = SHDHUDCore:require("data/buffs")
 
 local DEBUG_VISIBLE = false
 
@@ -200,11 +201,13 @@ end
 function SHDHUDPlayer:init(master_panel,index,...)
 	SHDHUDPlayer.super.init(self,master_panel,index,...)
 	
+	self._buffs = {}
+	
 	local hud_panel = master_panel:panel({
 		name = "hud_panel",
 		layer = 1,
 		w = 256,
-		h = 100,
+		h = 128,
 		x = 640,
 		y = 500
 	})
@@ -948,9 +951,9 @@ function SHDHUDPlayer:create_buffs()
 	local buffs_panel = hud_panel:panel({
 		name = "buffs_panel",
 		w = 152,
-		h = 64,
+		h = 100,
 		x = 0,
-		y = weapons:bottom() + 2
+		y = weapons:bottom() + 1
 	})
 	local buffs_panel_debug = buffs_panel:rect({
 		name = "buffs_panel_debug",
@@ -1666,6 +1669,248 @@ end
 function SHDHUDPlayer:set_custom_radial(data)
 	-- ????
 end
+
+function SHDHUDPlayer:add_buff(id,params)
+	local existing_buff = self._buffs[id]
+	local buff_td = SHDHUDBuffData.buffs[id]
+	if existing_buff then
+		-- assume if existing buff that buff tweakdata exists;
+		-- update values in this buff
+	else
+		if not buff_td then
+			SHDHUDCore:Print("Unrecognized buff:",id)
+			return
+		else
+			
+			local new_buff = {
+				panel = self:create_buff_icon(id,params),
+				duration = params.duration,
+				value = params.value,
+				start_t = params.start_t,
+				end_t = params.end_t
+			}
+			
+			self._buffs[id] = new_buff
+		end
+	end
+	
+	
+end
+
+function SHDHUDPlayer:create_buff_icon(id,params)
+	local buff_color = Color(1,1,1)
+	local icon_size = 18
+	local highlight_color = Color("ff8000")
+	local cooldown_color = Color.red
+	
+	local buff_td = SHDHUDBuffData.buffs[id]
+
+	local texture,texture_rect
+	local skill_atlas_2 = "guis/textures/pd2/skilltree_2/icons_atlas_2"
+	local source = buff_td.icon_type
+	if source == "skill" then 
+		texture = skill_atlas_2
+		local icon_x,icon_y = unpack(tweak_data.skilltree.skills[buff_td.icon_id].icon_xy)
+		texture_rect = {icon_x * 80,icon_y * 80,80,80}
+	elseif source == "perk" then 
+		texture,texture_rect = SHDHUDCore.get_specialization_icon_data_with_fallback(tonumber(buff_td.icon_id) or 1,nil,buff_td.icon_tier,buff_td.tier_floors)
+	elseif source == "icon" then 
+		texture,texture_rect = tweak_data.hud_icons:get_icon_data(buff_td.icon_id)
+	elseif source == "manual" then
+		texture = buff_td.icon_id
+		texture_rect = buff_td.icon_rect
+	else
+		texture = "guis/textures/ability_circle_fill"
+		texture_rect = nil
+	end
+	
+	local panel_w = icon_size + 4
+	local panel = self._buffs_panel:panel({
+		name = id,
+		w = panel_w,
+		h = icon_size + 24,
+		valign = "grow",
+		halign = "grow"
+	})
+	local debug_rect = panel:rect({
+		name = "debug_rect",
+		color = Color(math.random(),1,math.random()),
+		alpha = 0.5,
+		valign = "grow",
+		halign = "grow",
+		visible = false,
+		layer = 1
+	})
+	
+	local icon_x = panel_w / 2 --panel:center_x()
+	local icon = panel:bitmap({
+		name = "icon",
+		texture = texture,
+		texture_rect = texture_rect,
+		color = buff_color,
+		w = icon_size,
+		h = icon_size,
+		y = 2,
+		valign = "grow",
+		halign = "grow",
+		layer = 2
+	})
+	icon:set_center_x(icon_x)
+	
+	local bg = panel:rect({
+		name = "bg",
+		color = highlight_color,
+		w = icon_size,
+		h = icon_size,
+		x = icon:x(),
+		y = icon:y(),
+		valign = "grow",
+		halign = "grow",
+		alpha = 1,
+		layer = 0
+	})
+	bg:set_center_x(icon_x)
+	
+	local divider_top = panel:polyline({
+		name = "divider_top",
+		y = 0,
+		points = {
+			Vector3(0,0,0),
+			Vector3(panel_w,0,0)
+		},
+		color = buff_color,
+		valign = "bottom",
+		halign = "grow",
+		line_width = 1.1,
+		closed = false,
+		alpha = 0.33,
+		layer = 2
+	})
+	divider_top:set_center_x(icon_x)
+	
+	local divider_bottom = panel:polyline({
+		name = "divider_bottom",
+		y = icon:bottom() + 2,
+		points = {
+			Vector3(0,0,0),
+			Vector3(panel_w,0,0)
+		},
+		color = buff_color,
+		valign = "bottom",
+		halign = "grow",
+		line_width = 1.1,
+		closed = false,
+		alpha = 0.33,
+		layer = 2
+	})
+	divider_bottom:set_center_x(icon_x)
+	
+	--[[
+	local divider_top = panel:gradient({
+		name = "divider_top",
+		w = panel_w,
+		h = 2,
+		y = 0,
+		valign = "grow",
+		halign = "grow",
+		orientation = "vertical",
+		gradient_points = {
+			1,buff_color:with_alpha(0),
+			0,buff_color:with_alpha(1)
+		},
+		color = buff_color,
+		alpha = 0.5,
+		layer = 2
+	})
+	divider_top:set_center_x(icon_x)
+	
+	local divider_bottom = panel:gradient({
+		name = "divider_bottom",
+		w = panel_w,
+		h = 2,
+		y = icon:bottom() + 1,
+		valign = "grow",
+		halign = "grow",
+		orientation = "vertical",
+		gradient_points = {
+			0,buff_color:with_alpha(1),
+			1,buff_color:with_alpha(0)
+		},
+		color = buff_color,
+		alpha = 0.5,
+		layer = 2
+	})
+	divider_bottom:set_center_x(icon_x)
+	--]]
+	local progress_panel = panel:panel({
+		name = "progress_panel",
+		y = icon:bottom() + 2,
+		w = panel_w,
+		h = 16
+	})
+	local progress_bar = progress_panel:rect({
+		name = "progress_bar",
+		color = highlight_color,
+		w = panel_w,
+		h = 1.5,
+		y = 2,
+		alpha = 1,
+		valign = "grow",
+		halign = "grow",
+		layer = 0
+	})
+	
+	--local cooldown_arrow = panel
+	local bookend_head = progress_panel:polyline({
+		name = "bookend_head",
+		valign = "grow",
+		halign = "grow",
+		points = {
+			Vector3(0,-1,0),
+			Vector3(0,1,0)
+		},
+		line_width = 1.1,
+		closed = false,
+		color = buff_color,
+		layer = 2
+	})
+	bookend_head:set_y(progress_bar:center_y())
+	
+	local bookend_foot = progress_panel:polyline({
+		name = "bookend_foot",
+		x = 0,
+		y = bookend_head:y(),
+		valign = "grow",
+		halign = "grow",
+		points = {
+			Vector3(panel_w,-1,0),
+			Vector3(panel_w,1,0)
+		},
+		line_width = 1.1,
+		closed = false,
+		layer = 2
+	})
+	bookend_foot:set_right(panel:right())
+	
+	local value_label = panel:text({
+		name = "value_label",
+		color = buff_color,
+		text = "0x",
+		font = "fonts/borda_semibold",
+		font_size = 12,
+		y = progress_panel:bottom() + 2,
+		align = "center",
+		vertical = "top",
+		valign = "grow",
+		halign = "grow",
+		layer = 1
+	})
+	
+	return panel
+end
+
+
+
 
 
 -- returns a fresh table with a copy of all of this panel's data,
